@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import ast
 
+dirp = os.getcwd() + '/'
 
 if not os.path.exists('ds_link'):
 		os.mkdir('ds_link')
@@ -19,7 +20,7 @@ for fn in os.listdir('.'):
 		q2str = "fluxes_" + str(q2[0]) + "_" + str(q2[1])
 		q3str = "fluxes_" + str(q3[0]) + "_" + str(q3[1])
 		q4str = "fluxes_" + str(q4[0]) + "_" + str(q4[1])
-		os.symlink(fn, './ds_link/%s' % (q1str))
-		os.symlink(fn, './ds_link/%s' % (q2str))
-		os.symlink(fn, './ds_link/%s' % (q3str))
-		os.symlink(fn, './ds_link/%s' % (q4str))	
+		os.symlink((dirp + fn), './ds_link/%s' % (q1str))
+		os.symlink((dirp + fn), './ds_link/%s' % (q2str))
+		os.symlink((dirp + fn), './ds_link/%s' % (q3str))
+		os.symlink((dirp + fn), './ds_link/%s' % (q4str))	
