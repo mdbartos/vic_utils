@@ -29,62 +29,56 @@ w	WT = Wind turbine
 
 class get_cells():
 
-	self.reg_conv = {'Arkansas-White-Red': 'arkred',
-	'California' : 'cali',
-	'Great Basin' : 'gbas',
-	'Missouri' : 'mo',
-	'Pacific Northwest' : 'pnw',
-	'Rio Grande' : 'riog',
-	'Upper Colorado' : 'colo',
-	'Lower Colorado' : 'colo'}
+		
+	def __init__(self, tech):
+			
+		self.reg_conv = {'Arkansas-White-Red': 'arkred',
+		'California' : 'cali',
+		'Great Basin' : 'gbas',
+		'Missouri' : 'mo',
+		'Pacific Northwest' : 'pnw',
+		'Rio Grande' : 'riog',
+		'Upper Colorado' : 'colo',
+		'Lower Colorado' : 'colo'}
+		
+		self.newold_conv = {'arkred': 'ark',
+		'cali': 'cali',
+		'gbas': 'grb',
+		'mo' : 'mo',
+		'pnw' : 'crb',
+		'riog': 'rio',
+		'colo' : 'color'}
+		
+		self.pp = {}
+		self.diff_d = {}
+		
+		self.tech = pd.read_csv(tech).dropna(subset=['WRR'])
 	
-	self.newold_conv = {'arkred': 'ark',
-	'cali': 'cali',
-	'gbas': 'grb',
-	'mo' : 'mo',
-	'pnw' : 'crb',
-	'riog': 'rio',
-	'colo' : 'color'}
+		for i in set(self.tech['WRR']):
+			s_tech = self.tech.ix[self.tech['WRR'] == i]
+			pp.update({self.reg_conv[i] : {}})
+			for j, k in s_tech.iterrows():
+				pp[self.reg_conv[i]].update({int(k['PCODE']) : (k['LAT'], k['LON'])})
+		
+		self.r_latlon = pickle.load( open( "./dict/region_latlon.p", "rb"))
+		self.reg_latlon = {}
+		self.reg_latlon['arkred'] = r_latlon['ark']
+		self.reg_latlon['cali'] = r_latlon['cali']
+		self.reg_latlon['colo'] = r_latlon['color']
+		self.reg_latlon['gbas'] = r_latlon['grb']
+		self.reg_latlon['mo'] = r_latlon['mo']
+		self.reg_latlon['pnw'] = r_latlon['crb']
+		self.reg_latlon['riog'] = r_latlon['rio']
 	
-	self.pp = {}
+		self.diff_d.update({tech : {}})
 	
-	p = pd.read_csv('./dict/WECC_Plants_EW3.csv')
-	win = p.ix[p['Fuel'] == 'Wind']
-	
-	for i in set(win['Water Resource Region']):
-		s_win = win.ix[win['Water Resource Region'] == i]
-		wind_d.update({self.reg_conv[i] : {}})
-		for j, k in s_win.iterrows():
-			wind_d[self.reg_conv[i]].update({int(k['Plant Code']) : (k['Latitude'], k['Longitude'])})
-	sol = p.ix[p['Fuel'] == 'Solar']
-	
-	for i in set(sol['Water Resource Region']):
-		s_sol = sol.ix[sol['Water Resource Region'] == i]
-		solar_d.update({self.reg_conv[i] : {}})
-		for j, k in s_sol.iterrows():
-			solar_d[self.reg_conv[i]].update({int(k['Plant Code']) : (k['Latitude'], k['Longitude'])})
-	
-	
-	
-	r_latlon = pickle.load( open( "./dict/region_latlon.p", "rb"))
-	reg_latlon = {}
-	reg_latlon['arkred'] = r_latlon['ark']
-	reg_latlon['cali'] = r_latlon['cali']
-	reg_latlon['colo'] = r_latlon['color']
-	reg_latlon['gbas'] = r_latlon['grb']
-	reg_latlon['mo'] = r_latlon['mo']
-	reg_latlon['pnw'] = r_latlon['crb']
-	reg_latlon['riog'] = r_latlon['rio']
-	
-	diff_d = {'wind' : None, 'solar' : None}
-	
-	w_diff_d = {}
-	
-	def make_wind():
-		for i in wind_d.keys():
+		
+	def make_pp():
+		temp_diff_d = {}
+		for i in self.pp.keys():
 			j_d = {}
 	#		print os.getcwd()
-			for j, k in wind_d[i].items():
+			for j, k in self.pp[i].items():
 				fn_d = {}
 				j_d.update({j : None})
 	#			print j_d
@@ -97,33 +91,79 @@ class get_cells():
 				mi = fn_d[cell]
 				j_d[j] = cell		
 			print j_d.items()
-			w_diff_d.update({i : j_d})
-		diff_d['wind'] = w_diff_d
+			temp_diff_d.update({i : j_d})
+		self.diff_d[tech] = temp_diff_d
 	
-	s_diff_d = {}
-		
-	def make_solar():
-		for i in solar_d.keys():
-			j_d = {}
-	#		print os.getcwd()
-			for j, k in solar_d[i].items():
-				fn_d = {}
-				j_d.update({j : None})
-	#			print j_d
-				lo = tuple([k[0], k[1]])
-				for fn in reg_latlon[i]:
-	#				fn_d = {}
-					diff = ((fn[0] - lo[0])**2 + (fn[1] - lo[1])**2)**0.5
-					fn_d.update({fn : diff})
-				cell = min(fn_d, key=fn_d.get)
-				mi = fn_d[cell]
-				j_d[j] = cell		
-			print j_d.items()
-			s_diff_d.update({i : j_d})
-		diff_d['solar'] = s_diff_d
-		
-		
+	
+	def get_renhist():
+		h = os.getcwd()
+		print h
+		for i in self.diff_d.keys():
+			if not os.path.exists('%s' % (i)):
+				os.mkdir('%s' % (i))
+			for b in self.diff_d[i].keys():
+				cv = self.newold_conv[b]
+				if not os.path.exists('./%s/%s' % (i, cv)):
+					os.mkdir('./%s/%s' % (i, cv))
+				bdir = h + ('/%s/%s' % (i, cv))
+				os.chdir('%s' % (self.newold_conv[b]))
+				for j in diff_d[i][b].keys():
+					print diff_d[i][b][j]
+					shutil.copy('data_%s_%s' % (diff_d[i][b][j][0], diff_d[i][b][j][1]), bdir)
+				os.chdir(h)
+				
+					
+	
+	
+	def write_ren(old, hist):
+		for i in diff_d.keys():
+			if i == 'wind':
+				print os.getcwd()
+				os.chdir('./%s' % (i))
+			for b in diff_d[i].keys():
+				if old == False:
+					os.chdir('./%s' % (b))
+				elif old == True:
+					os.chdir('./%s' % (self.newold_conv[b]))
+				pp_d = {}
+				for j in diff_d[i][b].keys():
+					print diff_d[i][b][j]
+					f = open('data_%s_%s' % (diff_d[i][b][j][0], diff_d[i][b][j][1]), 'r')
+					r = f.readlines()
+					f.close()
+					print os.getcwd()
+					w_li = []			
+					for x in r:
+						if hist == False:
+							s = float(x.split()[3])
+							w_li.append(s)
+						elif hist == True:
+							s = float(x.split()[6])
+							w_li.append(s)
+					w_s = pd.Series(w_li)
+					pp_d.update({j : w_s})
+	#			print pp_d
+				pp_df = pd.DataFrame(pp_d)
+				print pp_df
+				pp_df.to_csv('%s_%s.csv' % (b, i))
+				os.chdir('..')
 
+#########Make latlon_d for solar to apply clips
+
+
+
+pickle.dump(latlon_d, open('solar.p', 'wb'))
+
+latlon_d = {}
+
+for i in diff_d.keys():
+	if i == 'solar':
+		for b in diff_d[i].keys():
+			ili = []
+			ili.extend(diff_d[i][b].values())
+			ili = list(set(ili))
+			print ili
+			latlon_d.update({self.newold_conv[b] : ili})
 ####################
 
 make_wind()
@@ -244,73 +284,9 @@ import shutil
 
 #cd 'C:\Users\Matt Bartos\Desktop\a1b'
 
-def get_renhist():
-	h = os.getcwd()
-	print h
-	for i in diff_d.keys():
-		if not os.path.exists('%s' % (i)):
-			os.mkdir('%s' % (i))
-		for b in diff_d[i].keys():
-			cv = self.newold_conv[b]
-			if not os.path.exists('./%s/%s' % (i, cv)):
-				os.mkdir('./%s/%s' % (i, cv))
-			bdir = h + ('/%s/%s' % (i, cv))
-			os.chdir('%s' % (self.newold_conv[b]))
-			for j in diff_d[i][b].keys():
-				print diff_d[i][b][j]
-				shutil.copy('data_%s_%s' % (diff_d[i][b][j][0], diff_d[i][b][j][1]), bdir)
-			os.chdir(h)
-			
-				
 
-
-def write_ren(old, hist):
-	for i in diff_d.keys():
-		if i == 'wind':
-			print os.getcwd()
-			os.chdir('./%s' % (i))
-		for b in diff_d[i].keys():
-			if old == False:
-				os.chdir('./%s' % (b))
-			elif old == True:
-				os.chdir('./%s' % (self.newold_conv[b]))
-			pp_d = {}
-			for j in diff_d[i][b].keys():
-				print diff_d[i][b][j]
-				f = open('data_%s_%s' % (diff_d[i][b][j][0], diff_d[i][b][j][1]), 'r')
-				r = f.readlines()
-				f.close()
-				print os.getcwd()
-				w_li = []			
-				for x in r:
-					if hist == False:
-						s = float(x.split()[3])
-						w_li.append(s)
-					elif hist == True:
-						s = float(x.split()[6])
-						w_li.append(s)
-				w_s = pd.Series(w_li)
-				pp_d.update({j : w_s})
-#			print pp_d
-			pp_df = pd.DataFrame(pp_d)
-			print pp_df
-			pp_df.to_csv('%s_%s.csv' % (b, i))
-			os.chdir('..')
 #		os.chdir('..')
 		
 write_ren()
 
-#########Make latlon_d for solar to apply clips
 
-latlon_d = {}
-
-for i in diff_d.keys():
-	if i == 'solar':
-		for b in diff_d[i].keys():
-			ili = []
-			ili.extend(diff_d[i][b].values())
-			ili = list(set(ili))
-			print ili
-			latlon_d.update({self.newold_conv[b] : ili})
-
-pickle.dump(latlon_d, open('solar.p', 'wb'))
