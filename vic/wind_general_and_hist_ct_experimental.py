@@ -41,7 +41,15 @@ class get_cells():
 		'Rio Grande' : 'riog',
 		'Upper Colorado' : 'colo',
 		'Lower Colorado' : 'colo'}
-		
+
+		self.oldnew_conv = {'ark': 'arkred',
+		'cali': 'cali',
+		'grb': 'gbas',
+		'mo' : 'mo',
+		'crb' : 'pnw',
+		'rio': 'riog',
+		'color' : 'colo'}
+	
 		self.newold_conv = {'arkred': 'ark',
 		'cali': 'cali',
 		'gbas': 'grb',
@@ -60,10 +68,10 @@ class get_cells():
 			self.pp.update({o : {}})
 			for i in set(t['WR_REG'].dropna()):
 				s_tech = t.ix[t['WR_REG'] == i]
-				self.pp[o].update({self.reg_conv[i] : {}})
+				self.pp[o].update({i : {}})
 				for j, k in s_tech.iterrows():
 					print j, k
-					self.pp[o][self.reg_conv[i]].update({int(j) : (k['LAT'], k['LON'])})
+					self.pp[o][i].update({int(j) : (k['LAT'], k['LON'])})
 		
 		self.r_latlon = pickle.load( open( latlon_path, "rb"))
 		self.reg_latlon = {}
@@ -92,7 +100,7 @@ class get_cells():
 				j_d.update({j : None})
 	#			print j_d
 				lo = tuple([k[0], k[1]])
-				for fn in self.reg_latlon[i]:
+				for fn in self.reg_latlon[self.oldnew_conv[i]]:
 	#				fn_d = {}
 					diff = ((fn[0] - lo[0])**2 + (fn[1] - lo[1])**2)**0.5
 					fn_d.update({fn : diff})
@@ -119,14 +127,14 @@ class get_cells():
 			if not os.path.exists('%s/%s' % (c, i)):
 				os.mkdir('%s/%s' % (c, i))
 			for b in self.diff_d[i].keys():
-				cv = self.newold_conv[b]
-				if not os.path.exists('%s/%s/%s' % (c, i, cv)):
-					os.mkdir('%s/%s/%s' % (c, i, cv))
-				bdir = c + ('/%s/%s' % (i, cv))
+#				cv = self.newold_conv[b]
+				if not os.path.exists('%s/%s/%s' % (c, i, b)):
+					os.mkdir('%s/%s/%s' % (c, i, b))
+				bdir = c + ('/%s/%s' % (i, b))
 #				os.chdir('%s' % (self.newold_conv[b]))
 				for j in self.diff_d[i][b].keys():
 					print self.diff_d[i][b][j]
-					shutil.copy('%s/%s/data_%s_%s' % (h, self.newold_conv[b], self.diff_d[i][b][j][0], self.diff_d[i][b][j][1]), bdir)
+					shutil.copy('%s/%s/data_%s_%s' % (h, b, self.diff_d[i][b][j][0], self.diff_d[i][b][j][1]), bdir)
 #				os.chdir(h)
 				
 					
