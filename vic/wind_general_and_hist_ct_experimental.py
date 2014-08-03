@@ -6,6 +6,7 @@ import pandas as pd
 import netCDF4
 from datetime import date
 import pickle
+import shutil
 
 '''
 Prime Mover Types:
@@ -30,7 +31,7 @@ w	WT = Wind turbine
 class get_cells():
 
 		
-	def __init__(self, tech):
+	def __init__(self, tech_d, latlon_path):
 			
 		self.reg_conv = {'Arkansas-White-Red': 'arkred',
 		'California' : 'cali',
@@ -52,38 +53,46 @@ class get_cells():
 		self.pp = {}
 		self.diff_d = {}
 		
-		self.tech = pd.read_csv(tech).dropna(subset=['WRR'])
+		self.tech_d = tech_d
 	
-		for i in set(self.tech['WRR']):
-			s_tech = self.tech.ix[self.tech['WRR'] == i]
-			pp.update({self.reg_conv[i] : {}})
-			for j, k in s_tech.iterrows():
-				pp[self.reg_conv[i]].update({int(k['PCODE']) : (k['LAT'], k['LON'])})
 		
-		self.r_latlon = pickle.load( open( "./dict/region_latlon.p", "rb"))
+		for o, t in tech_d.items():
+			self.pp.update({o : {}})
+			for i in set(t['WR_REG'].dropna()):
+				s_tech = t.ix[t['WR_REG'] == i]
+				self.pp[o].update({self.reg_conv[i] : {}})
+				for j, k in s_tech.iterrows():
+					print j, k
+					self.pp[o][self.reg_conv[i]].update({int(j) : (k['LAT'], k['LON'])})
+		
+		self.r_latlon = pickle.load( open( latlon_path, "rb"))
 		self.reg_latlon = {}
-		self.reg_latlon['arkred'] = r_latlon['ark']
-		self.reg_latlon['cali'] = r_latlon['cali']
-		self.reg_latlon['colo'] = r_latlon['color']
-		self.reg_latlon['gbas'] = r_latlon['grb']
-		self.reg_latlon['mo'] = r_latlon['mo']
-		self.reg_latlon['pnw'] = r_latlon['crb']
-		self.reg_latlon['riog'] = r_latlon['rio']
+		self.reg_latlon['arkred'] = self.r_latlon['ark']
+		self.reg_latlon['cali'] = self.r_latlon['cali']
+		self.reg_latlon['colo'] = self.r_latlon['color']
+		self.reg_latlon['gbas'] = self.r_latlon['grb']
+		self.reg_latlon['mo'] = self.r_latlon['mo']
+		self.reg_latlon['pnw'] = self.r_latlon['crb']
+		self.reg_latlon['riog'] = self.r_latlon['rio']
 	
-		self.diff_d.update({tech : {}})
+		for z in tech_d.keys():	
+			self.diff_d.update({z : {}})
+
+		self.region_df = {'arkred' : {}, 'cali' : {}, 'colo' : {}, 'gbas' : {}, 'mo' : {}, 'pnw' : {}, 'riog' : {}}
+		self.region_dict = {'arkred' : [], 'cali' : [], 'colo' : [], 'gbas' : [], 'mo' : [], 'pnw' : [], 'riog' : []}
 	
 		
-	def make_pp():
+	def make_diff(self, tech):
 		temp_diff_d = {}
-		for i in self.pp.keys():
+		for i in self.pp[tech].keys():
 			j_d = {}
 	#		print os.getcwd()
-			for j, k in self.pp[i].items():
+			for j, k in self.pp[tech][i].items():
 				fn_d = {}
 				j_d.update({j : None})
 	#			print j_d
 				lo = tuple([k[0], k[1]])
-				for fn in reg_latlon[i]:
+				for fn in self.reg_latlon[i]:
 	#				fn_d = {}
 					diff = ((fn[0] - lo[0])**2 + (fn[1] - lo[1])**2)**0.5
 					fn_d.update({fn : diff})
@@ -95,22 +104,30 @@ class get_cells():
 		self.diff_d[tech] = temp_diff_d
 	
 	
-	def get_renhist():
-		h = os.getcwd()
+	def get_renhist(self, tech, **kwargs):
+		if 'searchpath' in kwargs:
+			h = kwargs['searchpath']
+		else:
+			h = os.getcwd()
 		print h
+		if 'copypath' in kwargs:
+			c = kwargs['copypath']
+		else:
+			c = os.getcwd()
+		print c
 		for i in self.diff_d.keys():
-			if not os.path.exists('%s' % (i)):
-				os.mkdir('%s' % (i))
+			if not os.path.exists('%s/%s' % (c, i)):
+				os.mkdir('%s/%s' % (c, i))
 			for b in self.diff_d[i].keys():
 				cv = self.newold_conv[b]
-				if not os.path.exists('./%s/%s' % (i, cv)):
-					os.mkdir('./%s/%s' % (i, cv))
-				bdir = h + ('/%s/%s' % (i, cv))
-				os.chdir('%s' % (self.newold_conv[b]))
-				for j in diff_d[i][b].keys():
-					print diff_d[i][b][j]
-					shutil.copy('data_%s_%s' % (diff_d[i][b][j][0], diff_d[i][b][j][1]), bdir)
-				os.chdir(h)
+				if not os.path.exists('%s/%s/%s' % (c, i, cv)):
+					os.mkdir('%s/%s/%s' % (c, i, cv))
+				bdir = c + ('/%s/%s' % (i, cv))
+#				os.chdir('%s' % (self.newold_conv[b]))
+				for j in self.diff_d[i][b].keys():
+					print self.diff_d[i][b][j]
+					shutil.copy('%s/%s/data_%s_%s' % (h, self.newold_conv[b], self.diff_d[i][b][j][0], self.diff_d[i][b][j][1]), bdir)
+#				os.chdir(h)
 				
 					
 	
@@ -148,36 +165,8 @@ class get_cells():
 				pp_df.to_csv('%s_%s.csv' % (b, i))
 				os.chdir('..')
 
-#########Make latlon_d for solar to apply clips
+#######FUTURE ONLY####################
 
-
-
-pickle.dump(latlon_d, open('solar.p', 'wb'))
-
-latlon_d = {}
-
-for i in diff_d.keys():
-	if i == 'solar':
-		for b in diff_d[i].keys():
-			ili = []
-			ili.extend(diff_d[i][b].values())
-			ili = list(set(ili))
-			print ili
-			latlon_d.update({self.newold_conv[b] : ili})
-####################
-
-make_wind()
-make_solar()
-
-####################
-
-class makebasin():
-	def __init__(self):
-
-		self.region_df = {'arkred' : {}, 'cali' : {}, 'colo' : {}, 'gbas' : {}, 'mo' : {}, 'pnw' : {}, 'riog' : {}}
-		self.region_dict = {'arkred' : [], 'cali' : [], 'colo' : [], 'gbas' : [], 'mo' : [], 'pnw' : [], 'riog' : []}
-#		self.model = model
-		
 	def init_regdict(self):
 		for fn in os.listdir('.'):
 			if fn.endswith('nc'):
@@ -272,6 +261,57 @@ class makebasin():
 			print i
 			self.make_reg_single(i, type)
 			self.write_files(i, type)
+
+
+##################################################
+
+
+
+ct = pd.read_csv('CT_WECC.csv', index_col=0).dropna(subset=['WR_REG'])
+st_op = pd.read_csv('ST_WECC_OP.csv', index_col=0).dropna(subset=['WR_REG'])
+st_rc = pd.read_csv('ST_WECC_RC.csv', index_col=0).dropna(subset=['WR_REG'])
+
+techs = {'ct' : ct, 'st_op' : st_op, 'st_rc' : st_rc}
+
+b = get_cells(techs, '/home/melchior/Desktop/ct_st_forcings/region_latlon.p')
+
+for a in techs.keys():
+	b.make_diff(a)
+
+for a in techs.keys():
+	b.get_renhist(a, searchpath='/media/melchior/BALTHASAR/nsf_hydro/pre/source_data/source_hist_forcings', copypath='/home/melchior/Desktop/ct_st_forcings')
+
+
+#########Make latlon_d for solar to apply clips
+
+
+
+pickle.dump(latlon_d, open('solar.p', 'wb'))
+
+latlon_d = {}
+
+for i in diff_d.keys():
+	if i == 'solar':
+		for b in diff_d[i].keys():
+			ili = []
+			ili.extend(diff_d[i][b].values())
+			ili = list(set(ili))
+			print ili
+			latlon_d.update({self.newold_conv[b] : ili})
+####################
+
+make_wind()
+make_solar()
+
+####################
+
+class makebasin():
+	def __init__(self):
+
+
+#		self.model = model
+		
+
 
 
 ###########################
