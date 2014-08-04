@@ -10,13 +10,11 @@ import pickle
 
 class rout_prep():
 
-	def __init__(self, fns_idx, fns_clip, newname **kwargs):
+	def __init__(self, fns_idx, fns_clip, newname, **kwargs):
 		
 		self.newname = newname
 		self.fns_idx = fns_idx
 		self.fns_clip = fns_clip
-		self.stn = kwargs['stn']
-		self.rbm = kwargs['rbm']
 		self.df_d = {}
 		self.cl_d = {}
 		self.spec_d = {}
@@ -24,10 +22,9 @@ class rout_prep():
 		self.c_li = []
 		self.ndf_d = {}
 		self.nspec_d = {}
-		self.outlet = kwargs['outlet']
-		if self.rbm == True
-			self.nd = -1
-		elif nd in kwargs:
+		if 'outlet' in kwargs:
+			self.outlet = kwargs['outlet']
+		if 'nd' in kwargs:
 			self.nd = kwargs['nd']
 		else:
 			self.nd = 0
@@ -108,13 +105,13 @@ class rout_prep():
 	def convert_dir_internal(self, dirtable):
 		for i in self.dirconv.keys():
 			dirtable.replace(to_replace=i, value=self.dirconv[i], inplace=True)
-		self.spec_d['dir']['nodata'] = self.nd
+		self.spec_d['dir']['nodata'] = int(self.nd)
 		
 	
 	def convert_frac_internal(self, fractable):
 		for i in self.fracconv.keys():
 			fractable.replace(to_replace=i, value=self.fracconv[i], inplace=True)
-		self.spec_d['frac']['nodata'] = self.nd
+		self.spec_d['frac']['nodata'] = float(self.nd)
 			
 #	def convert_rbm_internal(self, ctables):
 #		for n, j in ctables.items():
@@ -165,8 +162,9 @@ class rout_prep():
 		##############################
 		#FIND STATION LOCATIONS	
 		##############################	
-	def get_stations(self):
-		stnloc = latlon_c[stn]
+	def get_stations(self, srpath, swpath):
+		stnlocs = pickle.load( open(srpath, 'rb'))
+		stnloc = stnlocs[self.newname]
 		
 #		lldf = pd.DataFrame(index=self.i_li, columns=self.c_li).sort(axis=0, ascending=False).sort(axis=1, ascending=True)
 #		for g in lldf.columns:
@@ -175,8 +173,7 @@ class rout_prep():
 
 		diff_d = {}
 
-		stn_tempfile = open('./%s/%s.stnloc' % (newname, newname), 'w')
-		with open('./%s/%s.stnloc' % (newname, newname), 'w') as stn_tempfile:
+		with open('%s/%s.stnloc' % (swpath, self.newname), 'w') as stn_tempfile:
 			for p in stnloc.iterrows():
 				for x in self.c_li:
 					for i in self.i_li:
@@ -192,8 +189,8 @@ class rout_prep():
 	#			print 'row:', cellno[0]+1, 'col:', cellno[1]+1
 
 	def set_bounds(self):
-		dfbound = self.ndf_d['frac'] == 0.0
-		b.ndf_d['dir'][tbound] = self.nd
+		dfbound = self.ndf_d['frac'] == self.nd
+		b.ndf_d['dir'][dfbound] = self.nd
 		
 		#################################
 		#PREP OUTPUT TABLES
@@ -211,14 +208,14 @@ class rout_prep():
 		#####################
 		#WRITE FILES	
 		#####################
-	def write_files(self):
+	def write_files(self, ascpath):
 		if self.newname in os.listdir('.'):
 			pass
 		else:
 			os.mkdir('./%s' % self.newname)
 		
 		for i in self.ndf_d.keys():
-			with open('./%s/%s_%s.asc' % (self.newname, self.newname, i), 'w') as outfile:
+			with open('%s/%s_%s' % (ascpath, self.newname, i), 'w') as outfile:
 				outfile.write('ncols         %s\n' % (self.nspec_d[i]['ncol']))
 				outfile.write('nrows         %s\n' % (self.nspec_d[i]['nrow']))
 				outfile.write('xllcorner     %s\n' % (self.nspec_d[i]['xll']))
@@ -229,5 +226,7 @@ class rout_prep():
 				st_df = st_df[1:].replace('\n ', '\n').replace('  ', ' ')
 				outfile.write(st_df)
 
-b = rout_prep({'dir' : 'pitt_d.asc', 'frac' : 'pitt_f.asc'}, {'alpha' : 'bayeskrig_a.txt', 'beta' : 'bayeskrig_b.txt', 'gamma' : 'bayeskrig_g.txt', 'mu' : 'bayeskrig_u.txt'}, 'pitt', None)
+b = rout_prep({'dir' : '/home/melchior/Desktop/ascii_16d/pitt_d.asc', 'frac' : '/home/melchior/Desktop/ascii_16d/pitt_f.asc'}, {'alpha' : '/home/melchior/Desktop/ascii_16d/bayeskrig_a.txt', 'beta' : '/home/melchior/Desktop/ascii_16d/bayeskrig_b.txt', 'gamma' : '/home/melchior/Desktop/ascii_16d/bayeskrig_g.txt', 'mu' : '/home/melchior/Desktop/ascii_16d/bayeskrig_u.txt'}, 'pitt')
 b.prep_tables()
+b.get_stations('/home/melchior/Desktop/hydrostn.p', '/home/melchior/Desktop/wpath')
+b.write_files('/home/melchior/Desktop/wpath')
