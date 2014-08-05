@@ -31,6 +31,7 @@ class rout_prep():
 			
 		self.dirconv = {1:3, 2:4, 4:5, 8:6, 16:7, 32:8, 64:1, 128:2, -9999: self.nd, 0: self.nd}
 		self.fracconv = {-9999: self.nd}
+		print self.newname
 
 	def round_multiple(self, rnum, rprec, rbase):
 		return round(rbase * round(float(rnum)/rbase), rprec)
@@ -68,8 +69,8 @@ class rout_prep():
 			self.df_d.update({k : df})
 			self.spec_d.update({k : {}})
 			self.spec_d[k].update({'ncol' : ncol, 'nrow' : nrow, 'xll' : xll, 'yll' : yll, 'cellsize' : cellsize, 'nodata' : nodata})
-			print k
-			print df
+			#print k
+			#print df
 
 		for k, c in self.fns_clip.items():
 			df = pd.read_table(c, sep=' ', skiprows=6, header=None)
@@ -98,8 +99,8 @@ class rout_prep():
 			self.cl_d.update({k : df})
 			self.spec_d.update({k : {}})
 			self.spec_d[k].update({'ncol' : ncol, 'nrow' : nrow, 'xll' : xll, 'yll' : yll, 'cellsize' : cellsize, 'nodata' : nodata})
-			print k
-			print df			
+			#print k
+			#print df			
 		
 
 	def convert_dir_internal(self, dirtable):
@@ -141,17 +142,17 @@ class rout_prep():
 		for d in table_d.keys():
 			ncellsize = self.spec_d[d]['cellsize']
 			nnodata = self.spec_d[d]['nodata']
-			ndf = table_d[d].loc[self.i_li, self.c_li]
-			print ndf
+			ndf = table_d[d].loc[self.i_li].loc[:, self.c_li]
+			#print ndf
 			ndf = ndf.sort(axis=0, ascending=False).sort(axis=1, ascending=True)
 			for i in ndf.columns:
 				coltype = type(ndf[i].iloc[0])
-				fillzero = 0
+				fillzero = self.nd
 				fillzero = coltype(fillzero)
 #				print fillzero
 				ndf[i].fillna(value=fillzero, inplace=True)
-			print d
-			print ndf
+			#print d
+			#print ndf
 			self.ndf_d.update({d : ndf})
 			self.nspec_d.update({d : {}})
 			self.nspec_d[d].update({'cellsize' : ncellsize, 'ncol' : len(ndf.columns), 'nrow' : len(ndf.index), 'xll' : (min(ndf.index) - ncellsize/2), 'yll' : (min(ndf.columns) - ncellsize/2), 'nodata' : nnodata})
@@ -164,29 +165,33 @@ class rout_prep():
 		##############################	
 	def get_stations(self, srpath, swpath):
 		stnlocs = pickle.load( open(srpath, 'rb'))
-		stnloc = stnlocs[self.newname]
-		
-#		lldf = pd.DataFrame(index=self.i_li, columns=self.c_li).sort(axis=0, ascending=False).sort(axis=1, ascending=True)
-#		for g in lldf.columns:
-#			q = [g for t in lldf[g]] 
-#			lldf[g] = zip(lldf.index, q)
+		if self.newname in stnlocs.keys():
+			stnloc = stnlocs[self.newname]
+			if not os.path.exists(swpath):
+				os.mkdir(swpath)
+#			lldf = pd.DataFrame(index=self.i_li, columns=self.c_li).sort(axis=0, ascending=False).sort(axis=1, ascending=True)
+#			for g in lldf.columns:
+#				q = [g for t in lldf[g]] 
+#				lldf[g] = zip(lldf.index, q)
 
-		diff_d = {}
+			diff_d = {}
 
-		with open('%s/%s.stnloc' % (swpath, self.newname), 'w') as stn_tempfile:
-			for p in stnloc.iterrows():
-				for x in self.c_li:
-					for i in self.i_li:
-						lo = tuple([i,x])
-	#					print lo
-						diff = ((lo[0] - p[1][2][0])**2 + (lo[1] - p[1][2][1])**2)**0.5
-						diff_d.update({(i, x) : diff})
-			
-				cell = min(diff_d, key=diff_d.get)
-				rowno = self.i_li.index(cell[0]) + 1
-				colno = self.c_li.index(cell[1]) + 1
-				stn_tempfile.write("1 %s            %s %s -9999\nNONE\n" % (p[1][3], colno, rowno))
-	#			print 'row:', cellno[0]+1, 'col:', cellno[1]+1
+			with open('%s/%s.stnloc' % (swpath, self.newname), 'w') as stn_tempfile:
+				for p in stnloc.iterrows():
+					for x in self.c_li:
+						for i in self.i_li:
+							lo = tuple([i,x])
+	#						print lo
+							diff = ((lo[0] - p[1][2][0])**2 + (lo[1] - p[1][2][1])**2)**0.5
+							diff_d.update({(i, x) : diff})
+				
+					cell = min(diff_d, key=diff_d.get)
+					rowno = self.i_li.index(cell[0]) + 1
+					colno = self.c_li.index(cell[1]) + 1
+					stn_tempfile.write("1 %s            %s %s -9999\nNONE\n" % (p[1][3], colno, rowno))
+	#				print 'row:', cellno[0]+1, 'col:', cellno[1]+1
+		else:
+			pass
 
 	def set_bounds(self):
 		dfbound = self.ndf_d['frac'] == self.nd
@@ -198,7 +203,7 @@ class rout_prep():
 		
 	def prep_tables(self):
 		self.import_tables()
-		self.convert_dir_internal(self.df_d['dir'])
+		self.convert_dir_internal(self.cl_d['dir'])
 		self.convert_frac_internal(self.df_d['frac'])
 		self.combine_idx()
 		self.idx_tables(self.df_d)
@@ -209,13 +214,10 @@ class rout_prep():
 		#WRITE FILES	
 		#####################
 	def write_files(self, ascpath):
-		if self.newname in os.listdir('.'):
-			pass
-		else:
-			os.mkdir('./%s' % self.newname)
-		
+		if not os.path.exists(ascpath):
+			os.mkdir(ascpath)
 		for i in self.ndf_d.keys():
-			with open('%s/%s_%s' % (ascpath, self.newname, i), 'w') as outfile:
+			with open('%s/%s.%s' % (ascpath, self.newname, i), 'w') as outfile:
 				outfile.write('ncols         %s\n' % (self.nspec_d[i]['ncol']))
 				outfile.write('nrows         %s\n' % (self.nspec_d[i]['nrow']))
 				outfile.write('xllcorner     %s\n' % (self.nspec_d[i]['xll']))
@@ -226,7 +228,13 @@ class rout_prep():
 				st_df = st_df[1:].replace('\n ', '\n').replace('  ', ' ')
 				outfile.write(st_df)
 
-b = rout_prep({'dir' : '/home/melchior/Desktop/ascii_16d/pitt_d.asc', 'frac' : '/home/melchior/Desktop/ascii_16d/pitt_f.asc'}, {'alpha' : '/home/melchior/Desktop/ascii_16d/bayeskrig_a.txt', 'beta' : '/home/melchior/Desktop/ascii_16d/bayeskrig_b.txt', 'gamma' : '/home/melchior/Desktop/ascii_16d/bayeskrig_g.txt', 'mu' : '/home/melchior/Desktop/ascii_16d/bayeskrig_u.txt'}, 'pitt')
-b.prep_tables()
-b.get_stations('/home/melchior/Desktop/hydrostn.p', '/home/melchior/Desktop/wpath')
-b.write_files('/home/melchior/Desktop/wpath')
+
+
+li = list(set(['_'.join(i.split('_')[:-1]) for i in os.listdir('/home/chesterlab/Bartos/pre/ascii_16d')]))
+
+for a in li:
+	b = rout_prep({'frac' : '/home/chesterlab/Bartos/pre/ascii_16d/%s_f.asc' % (a)}, {'dir' : '/home/chesterlab/Bartos/pre/ascii_16d/%s_d.asc' % (a), 'alpha' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d16/bayeskrig_a.txt', 'beta' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d16/bayeskrig_b.txt', 'gamma' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d16/bayeskrig_g.txt', 'mu' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d16/bayeskrig_u.txt'}, a)
+	b.prep_tables()
+	b.get_stations('/home/chesterlab/Bartos/VIC/input/dict/hydrostn.p', '/home/chesterlab/Bartos/VIC/input/rout/d16/%s' % (a))
+	b.write_files('/home/chesterlab/Bartos/VIC/input/rout/d16/%s' % (a))
+	del b
