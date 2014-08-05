@@ -11,6 +11,10 @@ def gen_cfg_rout(dpath, ipath, outpath, cfgpath, scen, basin):
 	r[16] = ipath + '/%s/%s.stnloc' % (basin, basin) + '\n'
 	r[18] = ipath + '/%s/sym/%s/fluxes_' % (basin, scen) + '\n'
 	r[21] = outpath + '/%s/%s' % (scen, basin) + '\n'
+	if not os.path.exists(outpath + '/' + scen):
+		os.mkdir(outpath + '/' + scen)
+	if not os.path.exists(outpath + '/' + scen + '/' + basin):	
+		os.mkdir(outpath + '/' + scen + '/' + basin)
 	if scen == 'hist':
 		r[23] = '1949 01 2009 12\n'
 		r[24] = '1949 01 2009 12\n'
@@ -18,7 +22,7 @@ def gen_cfg_rout(dpath, ipath, outpath, cfgpath, scen, basin):
 		r[23] = '2010 01 2099 12\n'
 		r[24] = '2010 01 2099 12\n'
 	w = ''.join(r)
-	print w
+#	print w
 	cfgwpath = cfgpath + ('/%s/rout_input.%s.%s' % (scen, scen, basin))
 	metafile.append('./rout %s\n' % (cfgwpath))
 	metafile.append('mv *.uh_s %s/%s/uh_s\n' % (ipath, basin))
