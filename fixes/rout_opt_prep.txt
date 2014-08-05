@@ -1,0 +1,125 @@
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/pitt/pitt.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/pitt/pitt.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/coyotecr/coyotecr.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/coyotecr/coyotecr.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/wabuska/wabuska.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/wabuska/wabuska.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/gila_imp/gila_imp.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/gila_imp/gila_imp.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/intermtn/intermtn.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/intermtn/intermtn.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/brigham/brigham.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/brigham/brigham.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/davis/davis.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/davis/davis.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/hoover/hoover.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/hoover/hoover.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/baker/baker.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/baker/baker.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/colstrip/colstrip.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/colstrip/colstrip.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/elwha/elwha.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/elwha/elwha.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/redmtn/redmtn.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/redmtn/redmtn.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/paria/paria.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/paria/paria.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/gc/gc.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/gc/gc.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/billw/billw.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/billw/billw.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/comanche/comanche.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/comanche/comanche.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/sodasprings/sodasprings.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/sodasprings/sodasprings.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/parker/parker.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/parker/parker.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/corona/corona.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/corona/corona.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/guer/guer.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/guer/guer.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/riohondo/riohondo.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/riohondo/riohondo.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/eaglept/eaglept.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/eaglept/eaglept.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/virgin/virgin.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/virgin/virgin.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/yelm/yelm.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/yelm/yelm.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/imperial/imperial.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/imperial/imperial.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/pawnee/pawnee.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/pawnee/pawnee.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/kern/kern.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/kern/kern.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/castaic/castaic.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/castaic/castaic.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/cottonwood/cottonwood.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/cottonwood/cottonwood.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/tulare/tulare.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/tulare/tulare.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/wauna/wauna.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/wauna/wauna.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/salton/salton.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/salton/salton.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/hmjack/hmjack.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/hmjack/hmjack.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/irongate/irongate.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/irongate/irongate.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/rushcr/rushcr.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/rushcr/rushcr.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/little_col/little_col.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/little_col/little_col.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/paper/paper.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/paper/paper.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/peck/peck.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/peck/peck.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/glenn/glenn.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/glenn/glenn.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/lees_f/lees_f.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/lees_f/lees_f.velo
+awk -f velo.awk /home/chesterlab/Bartos/VIC/input/rout/d16/lahontan/lahontan.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/lahontan/lahontan.velo
+
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/pitt/pitt.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/pitt/pitt.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/coyotecr/coyotecr.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/coyotecr/coyotecr.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/wabuska/wabuska.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/wabuska/wabuska.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/gila_imp/gila_imp.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/gila_imp/gila_imp.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/intermtn/intermtn.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/intermtn/intermtn.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/brigham/brigham.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/brigham/brigham.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/davis/davis.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/davis/davis.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/hoover/hoover.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/hoover/hoover.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/baker/baker.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/baker/baker.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/colstrip/colstrip.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/colstrip/colstrip.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/elwha/elwha.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/elwha/elwha.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/redmtn/redmtn.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/redmtn/redmtn.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/paria/paria.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/paria/paria.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/gc/gc.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/gc/gc.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/billw/billw.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/billw/billw.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/comanche/comanche.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/comanche/comanche.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/sodasprings/sodasprings.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/sodasprings/sodasprings.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/parker/parker.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/parker/parker.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/corona/corona.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/corona/corona.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/guer/guer.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/guer/guer.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/riohondo/riohondo.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/riohondo/riohondo.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/eaglept/eaglept.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/eaglept/eaglept.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/virgin/virgin.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/virgin/virgin.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/yelm/yelm.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/yelm/yelm.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/imperial/imperial.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/imperial/imperial.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/pawnee/pawnee.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/pawnee/pawnee.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/kern/kern.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/kern/kern.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/castaic/castaic.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/castaic/castaic.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/cottonwood/cottonwood.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/cottonwood/cottonwood.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/tulare/tulare.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/tulare/tulare.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/wauna/wauna.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/wauna/wauna.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/salton/salton.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/salton/salton.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/hmjack/hmjack.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/hmjack/hmjack.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/irongate/irongate.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/irongate/irongate.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/rushcr/rushcr.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/rushcr/rushcr.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/little_col/little_col.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/little_col/little_col.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/paper/paper.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/paper/paper.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/peck/peck.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/peck/peck.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/glenn/glenn.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/glenn/glenn.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/lees_f/lees_f.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/lees_f/lees_f.diff
+awk -f diff.awk /home/chesterlab/Bartos/VIC/input/rout/d16/lahontan/lahontan.dir > /home/chesterlab/Bartos/VIC/input/rout/d16/lahontan/lahontan.diff
+
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/pitt/pitt.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/pitt/pitt.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/coyotecr/coyotecr.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/coyotecr/coyotecr.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/wabuska/wabuska.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/wabuska/wabuska.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/gila_imp/gila_imp.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/gila_imp/gila_imp.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/intermtn/intermtn.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/intermtn/intermtn.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/brigham/brigham.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/brigham/brigham.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/davis/davis.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/davis/davis.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/hoover/hoover.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/hoover/hoover.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/baker/baker.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/baker/baker.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/colstrip/colstrip.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/colstrip/colstrip.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/elwha/elwha.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/elwha/elwha.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/redmtn/redmtn.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/redmtn/redmtn.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/paria/paria.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/paria/paria.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/gc/gc.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/gc/gc.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/billw/billw.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/billw/billw.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/comanche/comanche.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/comanche/comanche.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/sodasprings/sodasprings.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/sodasprings/sodasprings.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/parker/parker.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/parker/parker.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/corona/corona.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/corona/corona.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/guer/guer.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/guer/guer.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/riohondo/riohondo.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/riohondo/riohondo.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/eaglept/eaglept.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/eaglept/eaglept.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/virgin/virgin.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/virgin/virgin.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/yelm/yelm.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/yelm/yelm.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/imperial/imperial.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/imperial/imperial.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/pawnee/pawnee.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/pawnee/pawnee.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/kern/kern.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/kern/kern.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/castaic/castaic.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/castaic/castaic.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/cottonwood/cottonwood.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/cottonwood/cottonwood.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/tulare/tulare.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/tulare/tulare.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/wauna/wauna.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/wauna/wauna.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/salton/salton.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/salton/salton.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/hmjack/hmjack.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/hmjack/hmjack.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/irongate/irongate.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/irongate/irongate.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/rushcr/rushcr.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/rushcr/rushcr.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/little_col/little_col.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/little_col/little_col.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/paper/paper.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/paper/paper.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/peck/peck.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/peck/peck.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/glenn/glenn.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/glenn/glenn.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/lees_f/lees_f.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/lees_f/lees_f.xmask"
+./create_xmask "/home/chesterlab/Bartos/VIC/input/rout/d16/lahontan/lahontan.dir" "/home/chesterlab/Bartos/VIC/input/rout/d16/lahontan/lahontan.xmask"

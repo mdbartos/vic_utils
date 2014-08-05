@@ -5,7 +5,7 @@ import ast
 
 def rout_scale(spath, wpath)
 		
-	for fn in os.listdir('.'):
+	for fn in os.listdir(spath):
 		if "fluxes" in fn:
 			o_lat = ast.literal_eval(fn.split('_')[1])
 			o_lon = ast.literal_eval(fn.split('_')[2])
@@ -20,4 +20,20 @@ def rout_scale(spath, wpath)
 			os.symlink((spath + fn), '%s/%s' % (wpath, q1str))
 			os.symlink((spath + fn), '%s/%s' % (wpath, q2str))
 			os.symlink((spath + fn), '%s/%s' % (wpath, q3str))
-			os.symlink((spath + fn), '%s/%s' % (wpath, q4str))	
+			os.symlink((spath + fn), '%s/%s' % (wpath, q4str))
+
+
+def call_rscale(scen, srcpath, wrpath):
+	srcpath = srcpath + '/' + scen + '/'
+	for fn in os.listdir(wrpath):
+		#print fn
+		if fn in os.listdir(srcpath):
+			linkpath = srcpath + fn + '/'
+			print linkpath
+			xpath = wrpath + '/' + fn + '/sym/' + scen
+			print xpath
+
+			rout_scale(linkpath, xpath)
+
+call_rscale('hist','/media/melchior/BALTHASAR/nsf_hydro/VIC/output/sub-basin', '/home/chesterlab/Bartos/VIC/input/rout/d16')
+
