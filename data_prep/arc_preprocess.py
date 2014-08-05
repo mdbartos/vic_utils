@@ -60,6 +60,19 @@ for i, k in poly_list.items():
 	arcpy.Clip_management("flowdir_16d.asc", "#" , "e:/MBartos/source_GIS/other/grid_16d/dir/%s_d" % (i), k)
 	arcpy.RasterToASCII_conversion ("%s_d" % (i), "e:/MBartos/source_GIS/other/grid_16d/dir/ascii/%s_d.asc" % (i))
 
+for i, k in poly_list.items():
+	arcpy.SelectLayerByLocation_management ("At-Risk Hydropower", "INTERSECT", k.split('.')[0])
+	arr = arcpy.da.TableToNumPyArray ("At-risk Hydropower", ("FID", "ORISPL", "PNAME", "LAT", "LON"))
+	numpy.savetxt('e:/MBartos/source_GIS/sb_export/%s_hydro.csv' % (i), arr, fmt='%s', delimiter='\t')
+	arcpy.SelectLayerByAttribute_management("At-Risk Hydropower", "CLEAR_SELECTION")
+	arcpy.SelectLayerByLocation_management ("XYST_WECC_RC", "INTERSECT", k.split('.')[0])
+	arr = arcpy.da.TableToNumPyArray ("XYST_WECC_RC", ("FID", "PCODE", "PNAME", "LAT", "LON"))
+	numpy.savetxt('e:/MBartos/source_GIS/sb_export/%s_strc.csv' % (i), arr, fmt='%s', delimiter='\t')
+	arcpy.SelectLayerByAttribute_management("XYST_WECC_RC", "CLEAR_SELECTION")
+	arcpy.SelectLayerByLocation_management ("XYST_WECC_OP", "INTERSECT", k.split('.')[0])
+	arr = arcpy.da.TableToNumPyArray ("XYST_WECC_OP", ("FID", "PCODE", "PNAME", "LAT", "LON"))
+	numpy.savetxt('e:/MBartos/source_GIS/sb_export/%s_stop.csv' % (i), arr, fmt='%s', delimiter='\t')
+	arcpy.SelectLayerByAttribute_management("XYST_WECC_OP", "CLEAR_SELECTION")
 
 #Intersect fishnet & make frac file
 int_d = {}
