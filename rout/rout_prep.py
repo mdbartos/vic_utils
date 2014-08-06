@@ -1,5 +1,3 @@
-#TRY RECODING SUCH THAT INDEX IS SPECIFIED BY LAT/LON
-
 import numpy as np
 import pandas as pd
 import os
@@ -104,8 +102,8 @@ class rout_prep():
 		
 
 	def convert_dir_internal(self, dirtable):
-		for i in self.dirconv.keys():
-			dirtable.replace(to_replace=i, value=self.dirconv[i], inplace=True)
+		for i in dirtable.columns:
+			dirtable[i] = dirtable[i].map(self.dirconv)
 		self.spec_d['dir']['nodata'] = int(self.nd)
 		
 	
@@ -155,7 +153,7 @@ class rout_prep():
 			#print ndf
 			self.ndf_d.update({d : ndf})
 			self.nspec_d.update({d : {}})
-			self.nspec_d[d].update({'cellsize' : ncellsize, 'ncol' : len(ndf.columns), 'nrow' : len(ndf.index), 'xll' : (min(ndf.index) - ncellsize/2), 'yll' : (min(ndf.columns) - ncellsize/2), 'nodata' : nnodata})
+			self.nspec_d[d].update({'cellsize' : ncellsize, 'ncol' : len(ndf.columns), 'nrow' : len(ndf.index), 'yll' : (min(ndf.index) - ncellsize/2), 'xll' : (min(ndf.columns) - ncellsize/2), 'nodata' : nnodata})
 			
 #			ndf_cols = sorted(list(ndf.columns))
 #			ndf[ndf_cols]
@@ -230,11 +228,26 @@ class rout_prep():
 
 
 
+#1/16 degree
+
 li = list(set(['_'.join(i.split('_')[:-1]) for i in os.listdir('/home/chesterlab/Bartos/pre/ascii_16d')]))
 
 for a in li:
-	b = rout_prep({'frac' : '/home/chesterlab/Bartos/pre/ascii_16d/%s_f.asc' % (a)}, {'dir' : '/home/chesterlab/Bartos/pre/ascii_16d/%s_d.asc' % (a), 'alpha' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d16/bayeskrig_a.txt', 'beta' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d16/bayeskrig_b.txt', 'gamma' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d16/bayeskrig_g.txt', 'mu' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d16/bayeskrig_u.txt'}, a)
+	b = rout_prep({'frac' : '/home/chesterlab/Bartos/pre/ascii_16d/%s_f.asc' % (a)}, {'dir' : '/home/chesterlab/Bartos/VIC/input/rout/src_data/flowdir_16d.asc', 'alpha' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d16/bayeskrig_a.txt', 'beta' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d16/bayeskrig_b.txt', 'gamma' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d16/bayeskrig_g.txt', 'mu' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d16/bayeskrig_u.txt'}, a)
 	b.prep_tables()
 	b.get_stations('/home/chesterlab/Bartos/VIC/input/dict/hydrostn.p', '/home/chesterlab/Bartos/VIC/input/rout/d16/%s' % (a))
 	b.write_files('/home/chesterlab/Bartos/VIC/input/rout/d16/%s' % (a))
 	del b
+
+
+#1/8 degree
+
+li = list(set(['_'.join(i.split('_')[:-1]) for i in os.listdir('/home/chesterlab/Bartos/pre/ascii_8d')]))
+
+for a in li:
+	b = rout_prep({'frac' : '/home/chesterlab/Bartos/pre/ascii_8d/%s_f.asc' % (a)}, {'dir' : '/home/chesterlab/Bartos/VIC/input/rout/src_data/flowdir_8d.asc', 'alpha' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_a.txt', 'beta' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_b.txt', 'gamma' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_g.txt', 'mu' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_u.txt'}, a)
+	b.prep_tables()
+	b.get_stations('/home/chesterlab/Bartos/VIC/input/dict/hydrostn.p', '/home/chesterlab/Bartos/VIC/input/rout/d8/%s' % (a))
+	b.write_files('/home/chesterlab/Bartos/VIC/input/rout/d8/%s' % (a))
+	del b
+
