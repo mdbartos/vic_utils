@@ -25,7 +25,7 @@ def gen_cfg_rout(dpath, ipath, outpath, cfgpath, scen, basin):
 #	print w
 	if not os.path.exists(cfgpath + '/' + scen):
 		os.mkdir(cfgpath + '/' + scen)
-	cfgwpath = cfgpath + ('/%s/rout_input.%s.%s' % (scen, scen, basin))
+	cfgwpath = cfgpath + ('/%s/rt_in.%s' % (scen, basin))
 	metafile.append('./rout %s\n' % (cfgwpath))
 	metafile.append('mv -f *.uh_s %s/%s/uh_s\n' % (ipath, basin))
 	with open(cfgwpath, 'w') as outfile:
@@ -35,11 +35,13 @@ def gen_cfg_rout(dpath, ipath, outpath, cfgpath, scen, basin):
 #1/16 degree
 for fn in os.listdir('/home/chesterlab/Bartos/VIC/input/rout/d16'):
 	for s in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 	'echam_b1']:
-		gen_cfg_rout('/home/chesterlab/Bartos/VIC/config/rout/d16/rout_input.default', '/home/chesterlab/Bartos/VIC/input/rout/d16', '/home/chesterlab/Bartos/VIC/output/rout/d16', '/home/chesterlab/Bartos/VIC/config/rout/d16', s, fn)
+		gen_cfg_rout('/home/chesterlab/Bartos/VIC/config/rout/d16/rout_input.default_d16', '/home/chesterlab/Bartos/VIC/input/rout/d16', '/home/chesterlab/Bartos/VIC/output/rout/d16', '/home/chesterlab/Bartos/VIC/config/rout/d16', s, fn)
 
 with open('/home/chesterlab/Bartos/VIC/config/rout/d16/rout_sh_run_d16', 'w') as wfile:
 	m = ''.join(metafile)
 	wfile.write(m)
+
+metafile = []
 
 #1/8 degree
 for fn in os.listdir('/home/chesterlab/Bartos/VIC/input/rout/d8'):

@@ -4,7 +4,7 @@ import os
 import ast
 import pickle
 
-#latlon_c = pickle.load( open('hydrostn.p', 'rb'))
+
 
 class rout_prep():
 
@@ -26,6 +26,12 @@ class rout_prep():
 			self.nd = kwargs['nd']
 		else:
 			self.nd = 0
+		if 'rbm' in kwargs:
+			self.rbm = kwargs['rbm']
+		else:
+			self.rbm = False
+		if self.rbm == True:
+			self.nd = -1
 			
 		self.dirconv = {1:3, 2:4, 4:5, 8:6, 16:7, 32:8, 64:1, 128:2, -9999: self.nd, 0: self.nd}
 		self.fracconv = {-9999: self.nd}
@@ -146,7 +152,7 @@ class rout_prep():
 			for i in ndf.columns:
 				coltype = type(ndf[i].iloc[0])
 				fillzero = self.nd
-				fillzero = coltype(fillzero)
+				fillzero = coltype(fillzero)		
 #				print fillzero
 				ndf[i].fillna(value=fillzero, inplace=True)
 			#print d
@@ -193,8 +199,19 @@ class rout_prep():
 
 	def set_bounds(self):
 		dfbound = self.ndf_d['frac'] == self.nd
-		b.ndf_d['dir'][dfbound] = self.nd
-		
+		self.ndf_d['dir'][dfbound] = self.nd
+
+	def set_outlet(self):
+		olat = self.outlet[0]
+		olon = self.outlet[1]
+		diff_d = {}
+		for x in self.c_li:
+			for y in self.i_li:
+				diff = ((y - olat)**2 + (x - olon)**2)**0.5
+				diff_d.update({(y, x) : diff})
+		cell = min(diff_d, key=diff_d.get)
+		self.ndf_d['dir'].loc[cell[0], cell[1]] = 9
+
 		#################################
 		#PREP OUTPUT TABLES
 		#################################
@@ -207,6 +224,8 @@ class rout_prep():
 		self.idx_tables(self.df_d)
 		self.idx_tables(self.cl_d)
 		self.set_bounds()
+		if self.rbm == True:
+			self.set_outlet()
 		
 		#####################
 		#WRITE FILES	
@@ -250,4 +269,60 @@ for a in li:
 	b.get_stations('/home/chesterlab/Bartos/VIC/input/dict/hydrostn.p', '/home/chesterlab/Bartos/VIC/input/rout/d8/%s' % (a))
 	b.write_files('/home/chesterlab/Bartos/VIC/input/rout/d8/%s' % (a))
 	del b
+
+
+#RBM
+
+li = os.listdir('/media/melchior/BALTHASAR/nsf_hydro/VIC/output/full-energy/hist')  
+
+outlet_d = \
+{'baker': [48.522917, -121.951158],
+ 'billw': [34.209146, -113.608841],
+ 'brigham': [41.405775, -112.827558],
+ 'castaic': [34.399037, -118.784297],
+ 'colstrip': [46.254606, -106.715845],
+ 'comanche': [38.264583, -104.535417],
+ 'corona': [33.882482, -117.663351],
+ 'cottonwood': [36.465939, -117.94375],
+ 'coyotecr': [33.788092, -118.089583],
+ 'davis': [35.198558, -114.565003],
+ 'eaglept': [42.510417, -122.840234],
+ 'elwha': [48.098935, -123.555232],
+ 'gc': [36.11875, -112.084781],
+ 'gila_imp': [32.735053, -114.465405],
+ 'glenn': [42.947917, -115.297917],
+ 'guer': [42.202083, -104.502083],
+ 'hmjack': [48.019592, -122.189583],
+ 'hoover': [36.031796, -114.721969],
+ 'imperial': [32.892721, -114.466957],
+ 'intermtn': [38.989061, -113.122394],
+ 'irongate': [41.922742, -122.43533],
+ 'kern': [35.389583, -119.037057],
+ 'lahontan': [39.522221, -118.739583],
+ 'lees_f': [36.86185, -111.588661],
+ 'little_col': [35.916685, -111.580886],
+ 'paper': [46.438448, -116.98125],
+ 'paria': [36.873747, -111.595799],
+ 'parker': [34.305715, -114.139496],
+ 'pawnee': [40.297917, -103.639071],
+ 'peck': [48.027083, -105.989583],
+ 'pitt': [38.046113, -121.895622],
+ 'redmtn': [33.327083, -117.33125],
+ 'riohondo': [33.941766, -118.170734],
+ 'rushcr': [38.025318, -118.999682],
+ 'salton': [33.331882, -115.83125],
+ 'sodasprings': [43.294926, -122.496699],
+ 'tulare': [36.041109, -119.635417],
+ 'virgin': [36.893115, -113.924861],
+ 'wabuska': [39.140158, -119.155675],
+ 'wauna': [46.19375, -123.38125],
+ 'yelm': [47.042985, -122.677083]}
+
+
+for a in li:
+	b = rout_prep({'frac' : '/home/chesterlab/Bartos/pre/ascii_8d/%s_f.asc' % (a)}, {'dir' : '/home/chesterlab/Bartos/VIC/input/rout/src_data/flowdir_8d.asc', 'alpha' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_a.txt', 'beta' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_b.txt', 'gamma' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_g.txt', 'mu' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_u.txt'}, a, rbm=True, outlet=outlet_d[a])
+	b.prep_tables()
+	b.write_files('/home/chesterlab/Bartos/VIC/input/rbm/run/d8/%s' % (a))
+	del b
+
 
