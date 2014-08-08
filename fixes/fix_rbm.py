@@ -47,9 +47,7 @@ destpath = '/home/chesterlab/Bartos/VIC/input/rbm/run/d8'
 fesrcpath = '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/full-energy'
 flxsrcpath = '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/sub-basin' 
 
-#listdir = [i for i in os.listdir('/media/melchior/BALTHASAR/nsf_hydro/VIC/output/full-energy/hist') if i != 'corona'] 
-
-listdir = ['brigham']
+listdir = [i for i in os.listdir('/media/melchior/BALTHASAR/nsf_hydro/VIC/output/full-energy/hist') if not i in ['corona', 'brigham']] 
 
 for a in listdir:
 	for sc in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:
@@ -71,14 +69,21 @@ for a in listdir:
 				shutil.copy('%s/%s' % (nflxsrc, fn), '%s/%s' % (nflxdest, fn))
 		for fn in os.listdir(nfesrc):
 			shutil.copy('%s/%s' % (nfesrc, fn), '%s/%s' % (nfedest, fn))
+		if sc == 'hist':
+			convert_rbm('hist', nflxdest)
+			convert_rbm('hist', nfedest)
+		else:
+			convert_rbm('fut', nflxdest)
+			convert_rbm('fut', nfedest)
+
 
 
 
 # CONVERT
 
-convert_rbm('hist', '/home/chesterlab/Bartos/VIC/input/rbm/run/d8/brigham/flx/hist')
-convert_rbm('hist', '/home/chesterlab/Bartos/VIC/input/rbm/run/d8/brigham/fe/hist')
+#convert_rbm('hist', '/home/chesterlab/Bartos/VIC/input/rbm/run/d8/brigham/flx/hist')
+#convert_rbm('hist', '/home/chesterlab/Bartos/VIC/input/rbm/run/d8/brigham/fe/hist')
 
-for b in ['ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:
-	convert_rbm('fut', '/home/chesterlab/Bartos/VIC/input/rbm/run/d8/brigham/flx/%s' % (b))
-	convert_rbm('fut', '/home/chesterlab/Bartos/VIC/input/rbm/run/d8/brigham/fe/%s' % (b))
+#for b in ['ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:
+#	convert_rbm('fut', '/home/chesterlab/Bartos/VIC/input/rbm/run/d8/brigham/flx/%s' % (b))
+#	convert_rbm('fut', '/home/chesterlab/Bartos/VIC/input/rbm/run/d8/brigham/fe/%s' % (b))
