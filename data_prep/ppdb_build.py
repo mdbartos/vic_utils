@@ -151,6 +151,73 @@ ST_WECC_OP = ST_WECC_OP.loc[ST_WECC_OP['W_SRC'].isin(['Surface Water', 'Unknown 
 ST_WECC_RC[['PNAME', 'LAT', 'LON', 'CAPFAC', 'NAMEPCAP', 'PLPRMFL', 'WR_REG', 'W_SRC', 'PCODE']].dropna(subset=['LAT']).to_csv('ST_WECC_RC.csv')
 ST_WECC_OP[['PNAME', 'LAT', 'LON', 'CAPFAC', 'NAMEPCAP', 'PLPRMFL', 'WR_REG', 'W_SRC', 'PCODE']].dropna(subset=['LAT']).to_csv('ST_WECC_OP.csv')
 
+####GET SOLAR PV##########################
+PVix = b.d['eGRID_2009_gen']['ORISPL'].ix[b.d['eGRID_2009_gen']['PRMVR'] == 'PV'].drop_duplicates()
+#WECC_PV = b.d['eGRID_2009_plant'].loc[(b.d['eGRID_2009_plant']['PLPRMFL'] == 'SUN') & (b.d['eGRID_2009_plant']['NERC'] == 'WECC')]
+WECC_PV = b.d['eGRID_2009_plant'].loc[b.d['eGRID_2009_plant']['NERC'] == 'WECC']
+
+PV_WECC_ll = WECC_PV.drop_duplicates(subset=['ORISPL']).set_index('ORISPL').loc[PVix].dropna(subset=['SEQPLT09'])
+
+PV_WRR = b.d['EW3_main_data'].drop_duplicates(subset=['Plant Code']).set_index('Plant Code').loc[pd.Series(PV_WECC_ll.index).values][['Water Resource Region', 'Reported Water Source (Type)']].dropna(subset=['Reported Water Source (Type)'])
+
+PV_WECC = pd.concat([PV_WECC_ll['PNAME'], PV_WECC_ll['LAT'], PV_WECC_ll['LON'], PV_WECC_ll['CAPFAC'], PV_WECC_ll['NAMEPCAP'], PV_WECC_ll['PLPRMFL'], PV_WRR['Water Resource Region'], PV_WRR['Reported Water Source (Type)']], axis=1)
+
+PV_WECC['WR_REG'] = PV_WECC['Water Resource Region'].map(wrrdict)
+del PV_WECC['Water Resource Region']
+PV_WECC['W_SRC'] = PV_WECC['Reported Water Source (Type)']
+del PV_WECC['Reported Water Source (Type)']
+PV_WECC['PCODE'] = PV_WECC.index
+
+
+for i, k in PV_WECC['WR_REG'].loc[PV_WECC['WR_REG'].isnull()].iteritems():
+#	print i, k
+	fn_d = {}
+	for x, z in basincent.items():
+		blat = z[0]
+		blon = z[1]
+		slat = PV_WECC['LAT'][i]
+		slon = PV_WECC['LON'][i]
+		diff = ((blat - slat)**2 + (blon - slon)**2)**0.5
+		fn_d.update({x : diff})
+	cell = min(fn_d, key=fn_d.get)
+	PV_WECC['WR_REG'][i] = cell
+
+PV_WECC.to_csv('PV_WECC.csv')
+
+######GET WIND TURBINES######################################
+
+WNix = b.d['eGRID_2009_gen']['ORISPL'].ix[b.d['eGRID_2009_gen']['PRMVR'] == 'WT'].drop_duplicates()
+#WECC_WN = b.d['eGRID_2009_plant'].loc[(b.d['eGRID_2009_plant']['PLPRMFL'] == 'WND') & (b.d['eGRID_2009_plant']['NERC'] == 'WECC')]
+WECC_WN = b.d['eGRID_2009_plant'].loc[b.d['eGRID_2009_plant']['NERC'] == 'WECC']
+
+WN_WECC_ll = WECC_WN.drop_duplicates(subset=['ORISPL']).set_index('ORISPL').loc[WNix].dropna(subset=['SEQPLT09'])
+
+WN_WRR = b.d['EW3_main_data'].drop_duplicates(subset=['Plant Code']).set_index('Plant Code').loc[pd.Series(WN_WECC_ll.index).values][['Water Resource Region', 'Reported Water Source (Type)']].dropna(subset=['Reported Water Source (Type)'])
+
+WN_WECC = pd.concat([WN_WECC_ll['PNAME'], WN_WECC_ll['LAT'], WN_WECC_ll['LON'], WN_WECC_ll['CAPFAC'], WN_WECC_ll['NAMEPCAP'], WN_WECC_ll['PLPRMFL'], WN_WRR['Water Resource Region'], WN_WRR['Reported Water Source (Type)']], axis=1)
+
+WN_WECC['WR_REG'] = WN_WECC['Water Resource Region'].map(wrrdict)
+del WN_WECC['Water Resource Region']
+WN_WECC['W_SRC'] = WN_WECC['Reported Water Source (Type)']
+del WN_WECC['Reported Water Source (Type)']
+WN_WECC['PCODE'] = WN_WECC.index
+
+
+for i, k in WN_WECC['WR_REG'].loc[WN_WECC['WR_REG'].isnull()].iteritems():
+#	print i, k
+	fn_d = {}
+	for x, z in basincent.items():
+		blat = z[0]
+		blon = z[1]
+		slat = WN_WECC['LAT'][i]
+		slon = WN_WECC['LON'][i]
+		diff = ((blat - slat)**2 + (blon - slon)**2)**0.5
+		fn_d.update({x : diff})
+	cell = min(fn_d, key=fn_d.get)
+	WN_WECC['WR_REG'][i] = cell
+
+WN_WECC.to_csv('WN_WECC.csv')
+
 '''
 #############
 hydroelectric
