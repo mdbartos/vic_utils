@@ -112,14 +112,22 @@ pickle.dump( temp_d, open( "basin_temps_all.p", "wb" ) )
 
 ################ VALIDATION DATASET ##########################
 
+import os
+import pandas as pd
+import numpy as np
+import urllib2 as url
+from StringIO import StringIO
+
 valid_basins = {}
 
-for fn in os.listdir('.'):
-	sp = fn.split('.')
-	t = pd.read_csv(fn)
-	for i, k in t.iterrows():
+for fn in os.listdir('c:/Users/Matt Bartos/Dropbox/Southwest Heat Vulnerability Team Share/validation_data'):
+	if fn.endswith('csv'):
+		sp = '_'.join(fn.split('_')[:-1])
+		print sp
+		t = pd.read_csv(fn, header=None, sep = '\t', names=['FID', 'SITE_NO', 'STATION_NAME', 'LAT_SITE', 'LON_SITE'])
 		valid_basins.update({sp : {}})
-		valid_basins[sp].update({k['SITE_NO'] : { 'nm' : k['STATION_NAME'], 'lat' : k['LAT_SITE'], 'lon' : k['LON_SITE'] }})
+		for i, k in t.iterrows():
+			valid_basins[sp].update({str(k['SITE_NO']) : { 'nm' : k['STATION_NAME'], 'lat' : k['LAT_SITE'], 'lon' : k['LON_SITE'] }})
 	
 
 q_d = {}
