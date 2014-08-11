@@ -89,6 +89,7 @@ class get_cells():
 		self.region_df = {'arkred' : {}, 'cali' : {}, 'colo' : {}, 'gbas' : {}, 'mo' : {}, 'pnw' : {}, 'riog' : {}}
 		self.region_dict = {'arkred' : [], 'cali' : [], 'colo' : [], 'gbas' : [], 'mo' : [], 'pnw' : [], 'riog' : []}
 	
+		self.modelpath = ''
 		
 	def make_diff(self, tech):
 		temp_diff_d = {}
@@ -112,7 +113,7 @@ class get_cells():
 		self.diff_d[tech] = temp_diff_d
 	
 	
-	def get_renhist(self, tech, **kwargs):
+	def get_hist(self, tech, **kwargs):
 		if 'searchpath' in kwargs:
 			h = kwargs['searchpath']
 		else:
@@ -140,56 +141,59 @@ class get_cells():
 					
 	
 	
-	def write_ren(old, hist):
-		for i in diff_d.keys():
-			if i == 'wind':
-				print os.getcwd()
-				os.chdir('./%s' % (i))
-			for b in diff_d[i].keys():
-				if old == False:
-					os.chdir('./%s' % (b))
-				elif old == True:
-					os.chdir('./%s' % (self.newold_conv[b]))
-				pp_d = {}
-				for j in diff_d[i][b].keys():
-					print diff_d[i][b][j]
-					f = open('data_%s_%s' % (diff_d[i][b][j][0], diff_d[i][b][j][1]), 'r')
-					r = f.readlines()
-					f.close()
-					print os.getcwd()
-					w_li = []			
-					for x in r:
-						if hist == False:
-							s = float(x.split()[3])
-							w_li.append(s)
-						elif hist == True:
-							s = float(x.split()[6])
-							w_li.append(s)
-					w_s = pd.Series(w_li)
-					pp_d.update({j : w_s})
-	#			print pp_d
-				pp_df = pd.DataFrame(pp_d)
-				print pp_df
-				pp_df.to_csv('%s_%s.csv' % (b, i))
-				os.chdir('..')
+#	def cat_hist(old, hist):
+#		for i in diff_d.keys():
+#			if i == 'wind':
+#				print os.getcwd()
+#				os.chdir('./%s' % (i))
+#			for b in diff_d[i].keys():
+#				if old == False:
+#					os.chdir('./%s' % (b))
+#				elif old == True:
+#					os.chdir('./%s' % (self.newold_conv[b]))
+#				pp_d = {}
+#				for j in diff_d[i][b].keys():
+#					print diff_d[i][b][j]
+#					f = open('data_%s_%s' % (diff_d[i][b][j][0], diff_d[i][b][j][1]), 'r')
+#					r = f.readlines()
+#					f.close()
+#					print os.getcwd()
+#					w_li = []			
+#					for x in r:
+#						if hist == False:
+#							s = float(x.split()[3])
+#							w_li.append(s)
+#						elif hist == True:
+#							s = float(x.split()[6])
+#							w_li.append(s)
+#					w_s = pd.Series(w_li)
+#					pp_d.update({j : w_s})
+#	#			print pp_d
+#				pp_df = pd.DataFrame(pp_d)
+#				print pp_df
+#				pp_df.to_csv('%s_%s.csv' % (b, i))
+#				os.chdir('..')
 
 #######FUTURE ONLY####################
 
-	def init_regdict(self):
-		for fn in os.listdir('.'):
+	def init_regdict(self, modelpath):
+		self.modelpath = modelpath
+		print self.modelpath
+		for fn in os.listdir(self.modelpath):
 			if fn.endswith('nc'):
 				for region in self.region_dict.keys():
 					if region in fn[:6]:
 						self.region_dict[region].append(fn)
 	
 		
-	def make_reg_single(self, reg, type):
+	def make_reg_single(self, reg, tech):
 			
 		nc = {}
 		
 		for fn in self.region_dict[reg]:
-			if reg in diff_d[type].keys():
-				f = netCDF4.Dataset(fn, 'r')								
+			pfn = self.modelpath + '/' + fn
+			if self.newold_conv[reg] in self.diff_d[tech].keys():
+				f = netCDF4.Dataset(pfn, 'r')								
 				v = ''
 				
 				if fn[-12:-8] == 'prcp':
@@ -208,7 +212,7 @@ class get_cells():
 				
 				pan = pd.Panel(f.variables[v][:], items=f.variables['time'][:], major_axis=f.variables['lat'][:], minor_axis=f.variables['lon'][:])
 				
-				for i in diff_d[type][reg].values():
+				for i in self.diff_d[tech][self.newold_conv[reg]].values():
 #					nc.update({i : {'prcp': {}, 'tmax': {}, 'tmin': {}, 'wind': {}}})
 #					nc[i][v].update({yr:{}})
 #					ilat = np.where(f.variables['lat'] == i[0])[0]
@@ -230,8 +234,13 @@ class get_cells():
 				
 	
 	
-	def write_files(self, reg, type):
+	def write_files(self, reg, tech, **kwargs):
 
+		if 'wpath' in kwargs:
+			wpath = kwargs['wpath']
+		else:
+			wpath = self.modelpath
+			
 		for i, v in self.region_df[reg].items():
 			if not v == None:
 				c_prcp = pd.concat(self.region_df[reg][i]['prcp'].values())
@@ -253,25 +262,41 @@ class get_cells():
 				
 				latlon_df = latlon_df[['prcp', 'tmax', 'tmin', 'wind']]				
 				
-				if not os.path.exists('%s' % (type)):
-					os.mkdir('%s' % (type))
-				if not os.path.exists('./%s/%s' % (type, reg)):
-					os.mkdir('./%s/%s' % (type, reg))
+				if not os.path.exists('%s/%s' % (wpath, tech)):
+					os.mkdir('%s/%s' % (wpath, tech))
+				if not os.path.exists('%s/%s/%s' % (wpath, tech, reg)):
+					os.mkdir('%s/%s/%s' % (wpath, tech, reg))
 				else:
 					pass
-				latlon_df.to_csv('./%s/%s/data_%s_%s' % (type, reg, i[0], i[1]), sep=" ", header=False, index=False)
+				latlon_df.to_csv('%s/%s/%s/data_%s_%s' % (wpath, tech, reg, i[0], i[1]), sep="	", header=False, index=False)
 			
-	def basin_all(self, type):
+	def basin_all(self, tech, mpath):
 		
-		self.init_regdict()
+		self.init_regdict(mpath)
 		for i in self.region_df.keys():
 			self.region_df = {'arkred' : {}, 'cali' : {}, 'colo' : {}, 'gbas' : {}, 'mo' : {}, 'pnw' : {}, 'riog' : {}}
 			print i
-			self.make_reg_single(i, type)
-			self.write_files(i, type)
+			self.make_reg_single(i, tech)
+			self.write_files(i, tech)
 
+			
+ct = pd.read_csv('CT_WECC.csv', index_col=0).dropna(subset=['WR_REG'])
+st_op = pd.read_csv('ST_WECC_OP.csv', index_col=0).dropna(subset=['WR_REG'])
+st_rc = pd.read_csv('ST_WECC_RC.csv', index_col=0).dropna(subset=['WR_REG'])
+solar = pd.read_csv('PV_WECC.csv', index_col=0).dropna(subset=['WR_REG'])
+wind = pd.read_csv('CT_WECC.csv', index_col=0).dropna(subset=['WR_REG'])
 
-##################################################
+techs = {'ct' : ct, 'st_op' : st_op, 'st_rc' : st_rc, 'solar' : solar, 'wind' : wind}
+
+b = get_cells(techs, 'c:/Users/Matt Bartos/Desktop/cmip3_hydro_inputs/dict/region_latlon.p')
+
+for a in techs.keys():
+	b.make_diff(a)
+
+b.basin_all('solar', 'c:/Users/Matt Bartos/Desktop/cmip3_hydro_inputs/sresa1b.ukmo_hadcm3.1')
+
+for a in techs.keys():
+	b.basin_all(a, 'c:/Users/Matt Bartos/Desktop/cmip3_hydro_inputs/sresa1b.ukmo_hadcm3.1')	
 
 
 
