@@ -73,6 +73,12 @@ for i, k in poly_list.items():
 	arr = arcpy.da.TableToNumPyArray ("XYST_WECC_OP", ("FID", "PCODE", "PNAME", "LAT", "LON"))
 	numpy.savetxt('e:/MBartos/source_GIS/sb_export/%s_stop.csv' % (i), arr, fmt='%s', delimiter='\t')
 	arcpy.SelectLayerByAttribute_management("XYST_WECC_OP", "CLEAR_SELECTION")
+	
+for i, k in poly_list.items():
+	print i
+	arcpy.SelectLayerByLocation_management ("NHD_30_yr", "INTERSECT", k.split('.')[0])
+	arr = arcpy.da.TableToNumPyArray ("NHD_30_yr", ("FID", "SITE_NO", "STATION_NM", "LAT_SITE", "LON_SITE"))
+	numpy.savetxt('e:/MBartos/source_GIS/validation_export/%s_valid.csv' % (i), arr, fmt='%s', delimiter='\t')
 
 #Intersect fishnet & make frac file
 int_d = {}
