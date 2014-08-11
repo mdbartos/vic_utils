@@ -79,7 +79,7 @@ def gen_inpDA_rbm(dpath, ipath, cfgpath, scen, basin, perlpath, routpath):
 		r[30] = '1949 01 01 2009 12 31   VIC full_data\n'
 		r[31] = '1949 01 01 2009 12 31   write output\n'
  	else:
-		r[29] = '2010 01 01 2099 12 31    VIC flux\n'
+		r[29] = '2010 01 01 2090 12 31    VIC flux\n'
 		r[30] = '2010 01 01 2090 12 31    VIC full_data\n'
 		r[31] = '2010 01 01 2090 12 31    write output\n'
 	r[33] = '/home/chesterlab/Bartos/VIC/config/rout/UH.all\n'
@@ -90,10 +90,11 @@ def gen_inpDA_rbm(dpath, ipath, cfgpath, scen, basin, perlpath, routpath):
 	if not os.path.exists(cfgpath + '/' + scen):
 		os.mkdir(cfgpath + '/' + scen)
 	cfgwpath = cfgpath + ('/%s/%s.inp_DA' % (scen, basin))
+	DA_metafile.append('cd %s/%s\n' % (ipath, basin))
 	DA_metafile.append('perl %s/build_network_beta.pl %s/%s/%s.dir %s/%s/%s.Topology\n' % (perlpath, ipath, basin, basin, ipath, basin, basin))
 	DA_metafile.append('perl %s/build_input.pl %s/%s/%s\n' % (perlpath, cfgpath, scen, basin))
-	DA_metafile.append('mv -f %s/Rout.Cells %s/%s\n' % (perlpath, ipath, basin))
-	DA_metafile.append('mv -f %s/Rout.Cells.init %s/%s\n' % (perlpath, ipath, basin))
+#	DA_metafile.append('mv -f %s/Rout.Cells %s/%s\n' % (perlpath, ipath, basin))
+#	DA_metafile.append('mv -f %s/Rout.Cells.init %s/%s\n' % (perlpath, ipath, basin))
 	DA_metafile.append('%s/rout %s\n' % (routpath, cfgwpath))
 	with open(cfgwpath, 'w') as outfile:
 		outfile.write(w)
@@ -108,10 +109,10 @@ def gen_control_rbm(dpath, ipath, outpath, cfgpath, scen, basin, rbmpath):
 
 	if scen == 'hist':
 		r[3] = 'Starting Date:            19490101\n'
-		r[4] = 'Starting Date:            20091231\n'
+		r[4] = 'Ending Date:              20091231\n'
  	else:
 		r[3] = 'Starting Date:            20100101\n'
-		r[4] = 'Starting Date:            20901231\n'
+		r[4] = 'Ending Date:              20901231\n'
 	r[6] = 'Input directory:          ' + idir + '\n'
 	r[7] = 'Output directory:         ' + odir + '\n' 
 	r[8] = 'Topology File:            ' + idir + basin + '.Topology\n'

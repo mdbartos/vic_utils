@@ -9,36 +9,42 @@ def convert_rbm(per, path):
 			f = open(pfn, 'r')
 			r = f.readlines()
 			f.close()
+			nrecs = len(r)
 			with open(pfn, 'w') as f:
 				if per == 'hist':
-					f.write("# NRECS: 181160\n# DT: 24\n# STARTDATE: 1949-01-01 00:00:00\n# ALMA_OUTPUT: 0\n# NVARS: 4\n# OUT_PREC	OUT_EVAP	OUT_RUNOFF	OUT_BASEFLOW\n")
+					f.write("# NRECS: %s\n# DT: 24\n# STARTDATE: 1949-01-01 00:00:00\n# ALMA_OUTPUT: 0\n# NVARS: 7\n# YEAR	MONTH	DAY	OUT_PREC	OUT_EVAP	OUT_RUNOFF	OUT_BASEFLOW\n" % (nrecs))
 					for i in r:
-						s = i.split()[3:7]
+						s = i.split()[:7]
 						j = '	'.join(s)
 						n = j + '\n'
 						f.write(n)
 				elif per == 'fut':
-					f.write("# NRECS: 236680\n# DT: 24\n# STARTDATE: 2010-01-01 00:00:00\n# ALMA_OUTPUT: 0\n# NVARS: 4\n# OUT_PREC	OUT_EVAP	OUT_RUNOFF	OUT_BASEFLOW\n")
+					f.write("# NRECS: %s\n# DT: 24\n# STARTDATE: 2010-01-01 00:00:00\n# ALMA_OUTPUT: 0\n# NVARS: 7\n# YEAR	MONTH	DAY	OUT_PREC	OUT_EVAP	OUT_RUNOFF	OUT_BASEFLOW\n" % (nrecs))
 					for i in r:
-						s = i.split()[3:7]
+						s = i.split()[:7]
 						j = '	'.join(s)
 						n = j + '\n'
 						f.write(n)
 		elif 'full_data' in fn:
 			f = open(pfn, 'r')
-			h = f.readlines()[:4]
-			f = open(pfn, 'r')
-			r = f.readlines()[6:]
+			r = f.readlines()
 			f.close()
+			nrecs = len(r) - 6
 			with open(pfn, 'w') as f:
-				for x in h:
-					f.write(x)
-				f.write('# NVARS: 7\n# OUT_AIR_TEMP	 OUT_VP	 OUT_SHORTWAVE	 OUT_LONGWAVE	 OUT_DENSITY	 OUT_PRESSURE	 OUT_WIND\n')
-				for i in r:
-					s = i.split()[3:10]
-					j = '	'.join(s)
-					n = j + '\n'
-					f.write(n)
+				if per == 'hist':
+					f.write("# NRECS: %s\n# DT: 24\n# STARTDATE: 1949-01-01 00:00:00\n# ALMA_OUTPUT: 0\n# NVARS: 7\n# OUT_AIR_TEMP	 OUT_VP	 OUT_SHORTWAVE	 OUT_LONGWAVE	 OUT_DENSITY	 OUT_PRESSURE	 OUT_WIND\n" % (nrecs))
+					for i in r[6:]:
+						s = i.split()[3:10]
+						j = '	'.join(s)
+						n = j + '\n'
+						f.write(n)
+				else:
+					f.write("# NRECS: %s\n# DT: 24\n# STARTDATE: 2010-01-01 00:00:00\n# ALMA_OUTPUT: 0\n# NVARS: 7\n# OUT_AIR_TEMP	 OUT_VP	 OUT_SHORTWAVE	 OUT_LONGWAVE	 OUT_DENSITY	 OUT_PRESSURE	 OUT_WIND\n" % (nrecs))
+					for i in r[6:]:
+						s = i.split()[3:10]
+						j = '	'.join(s)
+						n = j + '\n'
+						f.write(n)
 
 
 # COPY FORCINGS
@@ -47,7 +53,7 @@ destpath = '/home/chesterlab/Bartos/VIC/input/rbm/run/d8'
 fesrcpath = '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/full-energy'
 flxsrcpath = '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/sub-basin' 
 
-listdir = [i for i in os.listdir('/media/melchior/BALTHASAR/nsf_hydro/VIC/output/full-energy/hist') if not i in ['corona', 'brigham']] 
+listdir = [i for i in os.listdir('/home/chesterlab/Bartos/VIC/input/rbm/run/d8')] 
 
 for a in listdir:
 	for sc in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:
