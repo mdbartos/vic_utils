@@ -284,7 +284,7 @@ ct = pd.read_csv('CT_WECC.csv', index_col=0).dropna(subset=['WR_REG'])
 st_op = pd.read_csv('ST_WECC_OP.csv', index_col=0).dropna(subset=['WR_REG'])
 st_rc = pd.read_csv('ST_WECC_RC.csv', index_col=0).dropna(subset=['WR_REG'])
 solar = pd.read_csv('PV_WECC.csv', index_col=0).dropna(subset=['WR_REG'])
-wind = pd.read_csv('CT_WECC.csv', index_col=0).dropna(subset=['WR_REG'])
+wind = pd.read_csv('WN_WECC.csv', index_col=0).dropna(subset=['WR_REG'])
 
 techs = {'ct' : ct, 'st_op' : st_op, 'st_rc' : st_rc, 'solar' : solar, 'wind' : wind}
 
