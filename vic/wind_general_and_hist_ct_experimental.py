@@ -230,7 +230,7 @@ class get_cells():
 #			f.close()
 			
 		self.region_df[reg] = nc
-		print self.region_df[reg]
+#		print self.region_df[reg]
 				
 	
 	
@@ -288,31 +288,37 @@ wind = pd.read_csv('WN_WECC.csv', index_col=0).dropna(subset=['WR_REG'])
 
 techs = {'ct' : ct, 'st_op' : st_op, 'st_rc' : st_rc, 'solar' : solar, 'wind' : wind}
 
-b = get_cells(techs, 'c:/Users/Matt Bartos/Desktop/cmip3_hydro_inputs/dict/region_latlon.p')
+#b = get_cells(techs, '/home/chesterlab/Dropbox/Southwest Heat Vulnerability Team Share/ppdb_data/region_latlon.p')
 
-for a in techs.keys():
-	b.make_diff(a)
+#for a in techs.keys():
+#	b.make_diff(a)
 
-b.basin_all('solar', 'c:/Users/Matt Bartos/Desktop/cmip3_hydro_inputs/sresa1b.ukmo_hadcm3.1')
+#b.basin_all('solar', 'c:/Users/Matt Bartos/Desktop/cmip3_hydro_inputs/sresa1b.ukmo_hadcm3.1')
 
-for a in techs.keys():
-	b.basin_all(a, 'c:/Users/Matt Bartos/Desktop/cmip3_hydro_inputs/sresa1b.ukmo_hadcm3.1')	
+modelroot = '/media/chesterlab/storage/make_forcing'
+
+for g in os.listdir(modelroot):
+	b = get_cells(techs, '/home/chesterlab/Dropbox/Southwest Heat Vulnerability Team Share/ppdb_data/region_latlon.p')
+	ap = modelroot + '/' + g
+	for a in techs.keys():
+		b.make_diff(a)
+		b.basin_all(a, ap)	
 
 
 
-ct = pd.read_csv('CT_WECC.csv', index_col=0).dropna(subset=['WR_REG'])
-st_op = pd.read_csv('ST_WECC_OP.csv', index_col=0).dropna(subset=['WR_REG'])
-st_rc = pd.read_csv('ST_WECC_RC.csv', index_col=0).dropna(subset=['WR_REG'])
+#ct = pd.read_csv('CT_WECC.csv', index_col=0).dropna(subset=['WR_REG'])
+#st_op = pd.read_csv('ST_WECC_OP.csv', index_col=0).dropna(subset=['WR_REG'])
+#st_rc = pd.read_csv('ST_WECC_RC.csv', index_col=0).dropna(subset=['WR_REG'])
 
-techs = {'ct' : ct, 'st_op' : st_op, 'st_rc' : st_rc}
+#techs = {'ct' : ct, 'st_op' : st_op, 'st_rc' : st_rc}
 
-b = get_cells(techs, '/home/melchior/Desktop/ct_st_forcings/region_latlon.p')
+#b = get_cells(techs, '/home/melchior/Desktop/ct_st_forcings/region_latlon.p')
 
-for a in techs.keys():
-	b.make_diff(a)
+#for a in techs.keys():
+#	b.make_diff(a)
 
-for a in techs.keys():
-	b.get_renhist(a, searchpath='/media/melchior/BALTHASAR/nsf_hydro/pre/source_data/source_hist_forcings', copypath='/home/melchior/Desktop/ct_st_forcings')
+#for a in techs.keys():
+#	b.get_renhist(a, searchpath='/media/melchior/BALTHASAR/nsf_hydro/pre/source_data/source_hist_forcings', copypath='/home/melchior/Desktop/ct_st_forcings')
 
 
 #########Make latlon_d for solar to apply clips

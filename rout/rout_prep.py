@@ -134,8 +134,8 @@ class rout_prep():
 			self.c_li.extend([i for i in self.df_d[d].columns])
 			self.i_li = sorted(list(set(self.i_li)))
 			self.c_li = sorted(list(set(self.c_li)))
-			print self.i_li
-			print self.c_li
+			#print self.i_li
+			#print self.c_li
 			
 		######################
 		#INDEX NEW TABLES	
@@ -201,6 +201,21 @@ class rout_prep():
 		dfbound = self.ndf_d['frac'] == self.nd
 		self.ndf_d['dir'][dfbound] = self.nd
 
+	def check_forcings(self, chkdir):
+		internal_latlon = []
+		df_internal = self.ndf_d['frac'][self.ndf_d['frac'] != self.nd]
+#		print df_internal
+		for i in df_internal.columns:
+			int_row = df_internal[i].dropna().index
+			for j in int_row:
+				internal_latlon.append(str(tuple([j, i])))
+#		print internal_latlon
+#		print len(internal_latlon)
+#		print len(list(set(internal_latlon)))
+		f_li = [str(tuple([ast.literal_eval(fn.split('_')[-2]), ast.literal_eval(fn.split('_')[-1])])) for fn in os.listdir(chkdir)]
+#		print f_li
+		print [x for x in internal_latlon if not x in f_li]
+
 	def set_outlet(self):
 		olat = self.outlet[0]
 		olon = self.outlet[1]
@@ -245,6 +260,10 @@ class rout_prep():
 				st_df = st_df[1:].replace('\n ', '\n').replace('  ', ' ')
 				outfile.write(st_df)
 
+
+b = rout_prep({'frac' : 'lees_f_frac.asc'}, {'dir' : 'lees_f_dir.asc'}, 'lees_f')
+b.prep_tables()
+b.check_forcings('/media/chesterlab/My Passport/Files/VIC/output/full-energy/hist/lees_f')
 
 
 #1/16 degree
