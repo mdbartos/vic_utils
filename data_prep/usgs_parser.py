@@ -117,6 +117,7 @@ import pandas as pd
 import numpy as np
 import urllib2 as url
 from StringIO import StringIO
+import pickle
 
 valid_basins = {}
 
@@ -132,10 +133,17 @@ for fn in os.listdir('c:/Users/Matt Bartos/Dropbox/Southwest Heat Vulnerability 
 
 q_d = {}
 		
-def get_validation_q(basin):
-	q_d.update({basin : {}})
+def get_validation_q(wpath, basin):
+	bwpath = wpath + '/' + basin
+	if not os.path.exists(bwpath):
+		os.mkdir(bwpath)
+	q_d.update({basin : []})
 	for i in valid_basins[basin].keys():
-		string_op = ("http://waterdata.usgs.gov/nwis/dv?referred_module=sw&search_site_no=%s" % (i))
+		fpad = ['0' for j in range(8-len(str(i)))]
+		fpad = ''.join(fpad)
+		padi = fpad + str(i)
+		print padi, i
+		string_op = ("http://waterdata.usgs.gov/nwis/dv?referred_module=sw&search_site_no=%s" % (padi))
 		string_ed = "&search_site_no_match_type=exact&site_tp_cd=OC&site_tp_cd=OC-CO&site_tp_cd=ES&site_tp_cd=LK&site_tp_cd=ST&site_tp_cd=ST-CA&site_tp_cd=ST-DCH&site_tp_cd=ST-TS&index_pmcode_00060=1&group_key=NONE&sitefile_output_format=html_table&column_name=agency_cd&column_name=site_no&column_name=station_nm&range_selection=date_range&begin_date=1900-01-01&end_date=2014-07-15&format=rdb&date_format=YYYY-MM-DD&rdb_compression=value&list_of_search_criteria=search_site_no%2Csite_tp_cd%2Crealtime_parameter_selection"
 		conn_str = string_op + string_ed
 		conn = url.urlopen(conn_str)
@@ -159,9 +167,10 @@ def get_validation_q(basin):
 				t = pd.read_table(st_input)
 				t = t[1:]
 				print "found data"
-				q_d[basin].update({i : t})
+				q_d[basin].append(i)
+				t.to_csv('%s/%s.csv' % (bwpath, padi))
 				
 for h in valid_basins.keys():
-	get_validation_q(h)
+	get_validation_q('c:/Users/Matt Bartos/Desktop/USGS_streamgauges_sub/validation', h)
 	
-pickle.dump( temp_d, open( "validation_streamflows.p", "wb" ) )
+pickle.dump( valid_basins, open( "validation_streamflows.p", "wb" ) )
