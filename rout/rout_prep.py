@@ -257,7 +257,7 @@ class rout_prep():
 				outfile.write('cellsize      %s\n' % (self.nspec_d[i]['cellsize']))
 				outfile.write('NODATA_value  %s\n' % (self.nspec_d[i]['nodata']))
 				st_df = str(self.ndf_d[i].to_string(header=False, index=False, index_names=False, justify='left'))
-				st_df = st_df[1:].replace('\n ', '\n').replace('  ', ' ')
+				st_df = st_df.replace('\n ', '\n').replace('  ', ' ')
 				outfile.write(st_df)
 
 

@@ -310,15 +310,13 @@ for g in os.listdir(modelroot):
 #st_op = pd.read_csv('ST_WECC_OP.csv', index_col=0).dropna(subset=['WR_REG'])
 #st_rc = pd.read_csv('ST_WECC_RC.csv', index_col=0).dropna(subset=['WR_REG'])
 
-#techs = {'ct' : ct, 'st_op' : st_op, 'st_rc' : st_rc}
+b = get_cells(techs, '/home/melchior/Desktop/ct_st_forcings/region_latlon.p')
 
-#b = get_cells(techs, '/home/melchior/Desktop/ct_st_forcings/region_latlon.p')
+for a in ['solar']:
+	b.make_diff(a)
 
-#for a in techs.keys():
-#	b.make_diff(a)
-
-#for a in techs.keys():
-#	b.get_renhist(a, searchpath='/media/melchior/BALTHASAR/nsf_hydro/pre/source_data/source_hist_forcings', copypath='/home/melchior/Desktop/ct_st_forcings')
+for a in ['solar']:
+	b.get_hist(a, searchpath='/media/melchior/BALTHASAR/nsf_hydro/pre/source_data/source_hist_forcings/active', copypath='/home/melchior/Desktop/ct_st_forcings')
 
 
 #########Make latlon_d for solar to apply clips

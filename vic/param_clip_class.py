@@ -148,15 +148,51 @@ class clip_params():
 #APPLY CLIP
 ##################################################
 
-latlon_miss = {}
+#latlon_miss = {}
 
-latlon_miss['lees_f_missing'] = [(42.9375, -110.6875), (42.8125, -110.6875), (42.6875, -110.6875), (42.8125, -110.5625), (42.6875, -110.5625), (42.5625, -110.5625), (43.0625, -110.4375), (42.9375, -110.4375), (43.3125, -110.3125), (43.0625, -110.3125), (42.9375, -110.3125), (43.3125, -110.1875), (43.1875, -110.1875), (43.0625, -110.1875), (37.5625, -106.8125), (36.8125, -106.6875), (37.0625, -106.5625)]
+#latlon_miss['lees_f_missing'] = [(42.9375, -110.6875), (42.8125, -110.6875), (42.6875, -110.6875), (42.8125, -110.5625), (42.6875, -110.5625), (42.5625, -110.5625), (43.0625, -110.4375), (42.9375, -110.4375), (43.3125, -110.3125), (43.0625, -110.3125), (42.9375, -110.3125), (43.3125, -110.1875), (43.1875, -110.1875), (43.0625, -110.1875), (37.5625, -106.8125), (36.8125, -106.6875), (37.0625, -106.5625)]
 
-b = [i for i in latlon_miss.keys()]
+rc_p = pickle.load(open('/home/chesterlab/Bartos/VIC/input/dict/tech_d.p'))
+rc_li = []
+rc_d = {}
 
-c = clip_params('/home/chesterlab/Bartos/VIC/input/vic/params/master/master_param.h5', '/home/chesterlab/Bartos/VIC/input/vic/params/master/master_veg', latlon_miss)
+for i in rc_p['st_rc'].keys():
+	for j in rc_p['st_rc'][i].values():
+		rc_li.append(j)
 
-outdir = '/home/chesterlab/Desktop/test_param'
+rc_d['st_rc'] = list(set(rc_li))
+
+b = [i for i in rc_d.keys()]
+
+c = clip_params('/home/chesterlab/Bartos/VIC/input/vic/params/master/master_param.h5', '/home/chesterlab/Bartos/VIC/input/vic/params/master/master_veg', rc_d)
+
+#outdir = '/home/chesterlab/Desktop/test_param'
+
+outdir = '/home/chesterlab/Bartos/VIC/input/vic/params/st_rc'
+
+
+
+sol_p = pickle.load(open('/home/chesterlab/Bartos/VIC/input/dict/tech_d.p', 'rb'))
+sol_li = []
+sol_d = {}
+
+for i in sol_p['solar'].keys():
+	for j in sol_p['solar'][i].values():
+		sol_li.append(j)
+
+sol_d['solar'] = list(set(sol_li))
+
+b = [i for i in sol_d.keys()]
+
+c = clip_params('/home/chesterlab/Bartos/VIC/input/vic/params/master/master_param.h5', '/home/chesterlab/Bartos/VIC/input/vic/params/master/master_veg', sol_d)
+
+#outdir = '/home/chesterlab/Desktop/test_param'
+
+outdir = '/home/chesterlab/Bartos/VIC/input/vic/params/solar'
+
+
+
+
 
 for basin in b:
 	c.clip_soil(basin, outdir)
