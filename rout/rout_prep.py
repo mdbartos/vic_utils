@@ -32,6 +32,8 @@ class rout_prep():
 			self.rbm = False
 		if self.rbm == True:
 			self.nd = -1
+		if 'stnloc' in kwargs:
+			self.stnloc = pickle.load(open(kwargs['stnloc'], 'rb'))
 			
 		self.dirconv = {1:3, 2:4, 4:5, 8:6, 16:7, 32:8, 64:1, 128:2, -9999: self.nd, 0: self.nd}
 		self.fracconv = {-9999: self.nd}
@@ -163,14 +165,34 @@ class rout_prep():
 			
 #			ndf_cols = sorted(list(ndf.columns))
 #			ndf[ndf_cols]
-		
+
+	def fix_stnames(self):		
+		for i, v in self.stnloc.items():
+			v['slug'] = [str(j).split(' ')[0][:5] for j in v['PNAME']]
+			da = []
+			for o, x in v.ix[v.duplicated(subset=['slug'])]['slug'].iteritems():
+				#print x
+				da.append(x)
+				n = da.count(x)
+				if len(x) < 5:
+					print x
+					self.stnloc[i].ix[o, 'slug'] = x + str(n)
+				elif (len(x) >= 5):
+					print x
+					self.stnloc[i].ix[o, 'slug'] = x[:4] + str(n)
+
 		##############################
 		#FIND STATION LOCATIONS	
 		##############################	
-	def get_stations(self, srpath, swpath):
-		stnlocs = pickle.load( open(srpath, 'rb'))
-		if self.newname in stnlocs.keys():
-			stnloc = stnlocs[self.newname]
+	def get_stations(self, swpath, **stnkwargs):
+		if 'typemarker' in stnkwargs:
+			typemarker = stnkwargs['typemarker']
+			stnfile_name = self.newname + '_' + typemarker
+		else:
+			stnfile_name = self.newname
+#		stnlocs = pickle.load( open(srpath, 'rb'))
+		if self.newname in self.stnloc.keys():
+			stnloc = self.stnloc[self.newname]
 			if not os.path.exists(swpath):
 				os.mkdir(swpath)
 #			lldf = pd.DataFrame(index=self.i_li, columns=self.c_li).sort(axis=0, ascending=False).sort(axis=1, ascending=True)
@@ -180,7 +202,7 @@ class rout_prep():
 
 			diff_d = {}
 
-			with open('%s/%s.stnloc' % (swpath, self.newname), 'w') as stn_tempfile:
+			with open('%s/%s.stnloc' % (swpath, stnfile_name), 'w') as stn_tempfile:
 				for p in stnloc.iterrows():
 					for x in self.c_li:
 						for i in self.i_li:
@@ -196,6 +218,12 @@ class rout_prep():
 	#				print 'row:', cellno[0]+1, 'col:', cellno[1]+1
 		else:
 			pass
+
+
+
+
+
+
 
 	def set_bounds(self):
 		dfbound = self.ndf_d['frac'] == self.nd
@@ -258,12 +286,14 @@ class rout_prep():
 				outfile.write('NODATA_value  %s\n' % (self.nspec_d[i]['nodata']))
 				st_df = str(self.ndf_d[i].to_string(header=False, index=False, index_names=False, justify='left'))
 				st_df = st_df.replace('\n ', '\n').replace('  ', ' ')
+				if st_df[0] == ' ' or '\t':
+					st_df = st_df[1:]
 				outfile.write(st_df)
 
 
-b = rout_prep({'frac' : 'lees_f_frac.asc'}, {'dir' : 'lees_f_dir.asc'}, 'lees_f')
-b.prep_tables()
-b.check_forcings('/media/chesterlab/My Passport/Files/VIC/output/full-energy/hist/lees_f')
+#b = rout_prep({'frac' : 'lees_f_frac.asc'}, {'dir' : 'lees_f_dir.asc'}, 'lees_f')
+#b.prep_tables()
+#b.check_forcings('/media/chesterlab/My Passport/Files/VIC/output/full-energy/hist/lees_f')
 
 
 #1/16 degree
@@ -283,9 +313,12 @@ for a in li:
 li = list(set(['_'.join(i.split('_')[:-1]) for i in os.listdir('/home/chesterlab/Bartos/pre/ascii_8d')]))
 
 for a in li:
-	b = rout_prep({'frac' : '/home/chesterlab/Bartos/pre/ascii_8d/%s_f.asc' % (a)}, {'dir' : '/home/chesterlab/Bartos/VIC/input/rout/src_data/flowdir_8d.asc', 'alpha' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_a.txt', 'beta' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_b.txt', 'gamma' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_g.txt', 'mu' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_u.txt'}, a)
+	b = rout_prep({'frac' : '/home/chesterlab/Bartos/pre/ascii_8d/%s_f.asc' % (a)}, {'dir' : '/home/chesterlab/Bartos/VIC/input/rout/src_data/flowdir_8d.asc', 'alpha' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_a.txt', 'beta' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_b.txt', 'gamma' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_g.txt', 'mu' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_u.txt'}, a, stnloc='/home/chesterlab/Bartos/VIC/input/dict/opstn.p')
 	b.prep_tables()
-	b.get_stations('/home/chesterlab/Bartos/VIC/input/dict/hydrostn.p', '/home/chesterlab/Bartos/VIC/input/rout/d8/%s' % (a))
+	b.fix_stnames()
+	b.get_stations('/home/chesterlab/Bartos/VIC/input/rout/d8/%s' % (a), typemarker = 'op')
+	#b.get_stations('/home/chesterlab/Bartos/VIC/input/dict/opstn.p', '/home/chesterlab/Bartos/VIC/input/rout/d8/%s' % (a), typemarker = 'op')
+	#b.get_stations('/home/chesterlab/Bartos/VIC/input/dict/hydrostn.p', '/home/chesterlab/Bartos/VIC/input/rout/d8/%s' % (a))
 	b.write_files('/home/chesterlab/Bartos/VIC/input/rout/d8/%s' % (a))
 	del b
 

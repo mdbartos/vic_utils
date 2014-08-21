@@ -174,3 +174,63 @@ for h in valid_basins.keys():
 	get_validation_q('c:/Users/Matt Bartos/Desktop/USGS_streamgauges_sub/validation', h)
 	
 pickle.dump( valid_basins, open( "validation_streamflows.p", "wb" ) )
+
+############## PREP VALIDATION DICT ###########################
+import pickle
+import ast
+import pandas as pd
+
+
+ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+def base62_encode(num, alphabet=ALPHABET):
+    """Encode a number in Base X
+
+    `num`: The number to encode
+    `alphabet`: The alphabet to use for encoding
+    """
+    if (num == 0):
+        return alphabet[0]
+    arr = []
+    base = len(alphabet)
+    while num:
+        rem = num % base
+        num = num // base
+        arr.append(alphabet[rem])
+    arr.reverse()
+    return ''.join(arr)
+
+def base62_decode(string, alphabet=ALPHABET):
+    """Decode a Base X encoded string into the number
+
+    Arguments:
+    - `string`: The encoded string
+    - `alphabet`: The alphabet to use for encoding
+    """
+    base = len(alphabet)
+    strlen = len(string)
+    num = 0
+
+    idx = 0
+    for char in string:
+        power = (strlen - (idx + 1))
+        num += alphabet.index(char) * (base ** power)
+        idx += 1
+
+    return num
+
+
+valid_d = pickle.load(open('validation_streamflows.p', 'rb'))
+
+def convert_to_df():
+	for i in valid_d.keys():
+		df = pd.DataFrame.from_dict(valid_d[i], orient='index')
+		df['latlon'] = zip(df['lat'], df['lon'])
+		df['PNAME'] = df['nm']
+		df = df.reset_index()
+		df['PCODE'] = df['index']
+		makeslug = lambda x: base62_encode(ast.literal_eval(x['PCODE']))
+		df['slug'] = df.apply(makeslug, axis=1)
+		df = df[['PNAME', 'PCODE', 'latlon', 'slug']]
+		valid_d.update({ i : df})
+
