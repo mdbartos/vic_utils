@@ -1,3 +1,8 @@
+from db_mash import mash_db
+import pickle
+import pandas as pd
+import numpy as np
+
 b = mash_db('ppdb')
 b.import_csv()
 b.import_xl()
@@ -51,6 +56,22 @@ wrrdict = pd.Series({
 'Hawaii' : np.nan,
 })
 
+
+
+post_pp_d = {}
+
+
+####SET UP GENERATOR EFFICIENCY TABLES##############
+
+b.d['SCHEDULE 3A 5A 8A 8B 8C 8D 8E 8F REVISED 2009 04112011_Generator'].columns = list(b.d['SCHEDULE 3A 5A 8A 8B 8C 8D 8E 8F REVISED 2009 04112011_Generator'].loc[2].values)
+
+b.d['SCHEDULE 3A 5A 8A 8B 8C 8D 8E 8F REVISED 2009 04112011_Generator'] = b.d['SCHEDULE 3A 5A 8A 8B 8C 8D 8E 8F REVISED 2009 04112011_Generator'].loc[3:]
+
+b.d['SCHEDULE 3A 5A 8A 8B 8C 8D 8E 8F REVISED 2009 04112011_Boiler'].columns = list(b.d['SCHEDULE 3A 5A 8A 8B 8C 8D 8E 8F REVISED 2009 04112011_Boiler'].loc[2].values)
+
+b.d['SCHEDULE 3A 5A 8A 8B 8C 8D 8E 8F REVISED 2009 04112011_Boiler'] = b.d['SCHEDULE 3A 5A 8A 8B 8C 8D 8E 8F REVISED 2009 04112011_Boiler'].loc[3:]
+
+
 ####GET COMBUSTION TURBINES##########################
 CTix = b.d['eGRID_2009_gen']['ORISPL'].ix[b.d['eGRID_2009_gen']['PRMVR'].isin(['IG', 'IC', 'GT', 'CT'])].drop_duplicates()
 
@@ -80,7 +101,25 @@ for i, k in CT_WECC['WR_REG'].loc[CT_WECC['WR_REG'].isnull()].iteritems():
 	cell = min(fn_d, key=fn_d.get)
 	CT_WECC['WR_REG'][i] = cell
 
-CT_WECC.to_csv('CT_WECC.csv')
+ct_wecc_stix = [i for i in CT_WECC.index]
+
+ct_tot_gen = b.d['GeneratorY09_Exist'].set_index('PLANT_CODE', drop=False).loc[ct_wecc_stix].groupby('PLANT_CODE').sum()
+ct_ct_gen = b.d['GeneratorY09_Exist'].set_index('PLANT_CODE', drop=False).loc[ct_wecc_stix]
+ct_ct_gen = ct_ct_gen.loc[ct_ct_gen['PRIME_MOVER'].isin(['IG', 'IC', 'GT', 'CT'])].groupby('PLANT_CODE').sum()
+
+CT_WECC['CAP_FRAC'] = ct_ct_gen['NAMEPLATE']/ct_tot_gen['NAMEPLATE']
+
+post_pp_d.update({'ct' : CT_WECC})
+
+
+#ct_gen_monthly = b.d['SCHEDULE 3A 5A 8A 8B 8C 8D 8E 8F REVISED 2009 04112011_Generator'].set_index('Plant ID').loc[CT_WECC.index] 
+
+#ct_boil_gen = b.d['EnviroAssocY09_Boiler_Gen'].set_index('PLANT_CODE').loc[CT_WECC.index].dropna(subset=['UTILITY_ID'])
+
+#ct_boil_cool = b.d['EnviroAssocY09_Boiler_Cool'].set_index('PLANT_CODE').loc[CT_WECC.index].dropna(subset=['UTILITY_ID'])
+
+#CT_WECC.to_csv('CT_WECC.csv')
+
 #####################################################
 
 ####GET STEAM TURBINES###############################
@@ -145,13 +184,106 @@ ST_WECC_OP = pd.concat([ST_WECC_OP, OC_add], axis=0)
 ST_WECC_RC['PCODE'] = ST_WECC_RC.index
 ST_WECC_OP['PCODE'] = ST_WECC_OP.index
 
-ST_WECC_RC = ST_WECC_RC.loc[ST_WECC_RC['W_SRC'].isin(['Surface Water', 'Unknown Freshwater', 'GW/Surface Water'])]
+#Uncomment to get only SW RC systems
+
+#ST_WECC_RC = ST_WECC_RC.loc[ST_WECC_RC['W_SRC'].isin(['Surface Water', 'Unknown Freshwater', 'GW/Surface Water'])]
 ST_WECC_OP = ST_WECC_OP.loc[ST_WECC_OP['W_SRC'].isin(['Surface Water', 'Unknown Freshwater', 'GW/Surface Water'])]
 
-ST_WECC_RC[['PNAME', 'LAT', 'LON', 'CAPFAC', 'NAMEPCAP', 'PLPRMFL', 'WR_REG', 'W_SRC', 'PCODE']].dropna(subset=['LAT']).to_csv('ST_WECC_RC.csv')
-ST_WECC_OP[['PNAME', 'LAT', 'LON', 'CAPFAC', 'NAMEPCAP', 'PLPRMFL', 'WR_REG', 'W_SRC', 'PCODE']].dropna(subset=['LAT']).to_csv('ST_WECC_OP.csv')
+#NEW
+
+ST_WECC_RC = ST_WECC_RC.dropna(subset=['LAT'])
+ST_WECC_OP = ST_WECC_OP.dropna(subset=['LAT'])
+
+st_wecc_rc_stix = [int(i) for i in ST_WECC_RC.index]
+st_wecc_op_stix = [int(i) for i in ST_WECC_OP.index]
+
+
+#USING FUEL
+
+st_rc_fuel_monthly = b.d['f923_gen_fuel'].set_index('Plant ID', drop=False).loc[st_wecc_rc_stix]
+st_rc_fuel_all = st_rc_fuel_monthly.groupby('Plant ID').sum()
+st_rc_fuel_monthly = st_rc_fuel_monthly.loc[st_rc_fuel_monthly['Reported Prime Mover'].isin(['ST', 'CA', 'BT'])].groupby('Plant ID').sum()
+
+st_rc_fuel_monthly['GEN_FRACTION'] =  st_rc_fuel_monthly['NET GENERATION (megawatthours)']/st_rc_fuel_all['NET GENERATION (megawatthours)']  
+
+heat_cols = [i for i in list(st_rc_fuel_monthly.columns) if 'ELEC_MMBTUS' in str(i)] 
+elec_cols = [i for i in list(st_rc_fuel_monthly.columns) if 'NETGEN_' in str(i)]
+
+for j, k in enumerate(heat_cols):
+	mo = k.split('_')[-1]
+	inp = heat_cols[j]
+	elec = elec_cols[j]
+	print inp, elec
+	st_rc_fuel_monthly['ELEC_EFF_%s' % (mo)] = (st_rc_fuel_monthly[elec]/0.29307)/st_rc_fuel_monthly[inp]
+
+#st_rc_fuel_monthly['ELEC_EFF_AVG'] = (st_rc_fuel_monthly['NET GENERATION (megawatthours)']/0.29307)/st_rc_fuel_monthly['ELEC FUEL CONSUMPTION MMBTUS'] 
+
+st_rc_fuel_monthly.replace(to_replace=[np.inf, -np.inf], value=np.nan, inplace=True)
+st_rc_fuel_monthly[st_rc_fuel_monthly.iloc[:, 87:99] > 1] = np.nan
+st_rc_fuel_monthly[st_rc_fuel_monthly.iloc[:, 87:99] < 0] = np.nan
+
+st_rc_fuel_monthly['ELEC_EFF_AVG'] = st_rc_fuel_monthly.iloc[:, 87:99].mean(axis=1) 
+
+st_rc_capacities = b.d['GeneratorY09_Exist'].set_index('PLANT_CODE', drop=False).loc[st_wecc_rc_stix].groupby('PLANT_CODE').sum()[['NAMEPLATE', 'SUMMER_CAPABILITY', 'WINTER_CAPABILITY']]
+
+
+
+st_op_fuel_monthly = b.d['f923_gen_fuel'].set_index('Plant ID', drop=False).loc[st_wecc_op_stix]
+st_op_fuel_all = st_op_fuel_monthly.groupby('Plant ID').sum()
+st_op_fuel_monthly = st_op_fuel_monthly.loc[st_op_fuel_monthly['Reported Prime Mover'].isin(['ST', 'CA', 'BT'])].groupby('Plant ID').sum()
+
+st_op_fuel_monthly['GEN_FRACTION'] =  st_op_fuel_monthly['NET GENERATION (megawatthours)']/st_op_fuel_all['NET GENERATION (megawatthours)']  
+
+heat_cols = [i for i in list(st_op_fuel_monthly.columns) if 'ELEC_MMBTUS' in str(i)] 
+elec_cols = [i for i in list(st_op_fuel_monthly.columns) if 'NETGEN_' in str(i)]
+
+for j, k in enumerate(heat_cols):
+	mo = k.split('_')[-1]
+	inp = heat_cols[j]
+	elec = elec_cols[j]
+	print inp, elec
+	st_op_fuel_monthly['ELEC_EFF_%s' % (mo)] = (st_op_fuel_monthly[elec]/0.29307)/st_op_fuel_monthly[inp]
+
+#st_op_fuel_monthly['ELEC_EFF_AVG'] = (st_op_fuel_monthly['NET GENERATION (megawatthours)']/0.29307)/st_op_fuel_monthly['ELEC FUEL CONSUMPTION MMBTUS'] 
+
+st_op_fuel_monthly.replace(to_replace=[np.inf, -np.inf], value=np.nan, inplace=True)
+st_op_fuel_monthly[st_op_fuel_monthly.iloc[:, 87:99] > 1] = np.nan
+st_op_fuel_monthly[st_op_fuel_monthly.iloc[:, 87:99] < 0] = np.nan
+
+st_op_fuel_monthly['ELEC_EFF_AVG'] = st_op_fuel_monthly.iloc[:, 87:99].mean(axis=1) 
+
+st_op_capacities = b.d['GeneratorY09_Exist'].set_index('PLANT_CODE', drop=False).loc[st_wecc_op_stix].groupby('PLANT_CODE').sum()[['NAMEPLATE', 'SUMMER_CAPABILITY', 'WINTER_CAPABILITY']]
+
+ST_WECC_RC = pd.concat([ST_WECC_RC, st_rc_fuel_monthly, st_rc_capacities], axis=1)
+ST_WECC_OP = pd.concat([ST_WECC_OP, st_op_fuel_monthly, st_op_capacities], axis=1)
+
+
+st_rc_tot_gen = b.d['GeneratorY09_Exist'].set_index('PLANT_CODE', drop=False).loc[st_wecc_rc_stix].groupby('PLANT_CODE').sum()
+st_rc_st_rc_gen = b.d['GeneratorY09_Exist'].set_index('PLANT_CODE', drop=False).loc[st_wecc_rc_stix]
+st_rc_st_rc_gen = st_rc_st_rc_gen.loc[st_rc_st_rc_gen['PRIME_MOVER'].isin(['ST', 'CA', 'BT'])].groupby('PLANT_CODE').sum()
+
+ST_WECC_RC['CAP_FRAC'] = st_rc_st_rc_gen['NAMEPLATE']/st_rc_tot_gen['NAMEPLATE']
+
+
+st_op_tot_gen = b.d['GeneratorY09_Exist'].set_index('PLANT_CODE', drop=False).loc[st_wecc_op_stix].groupby('PLANT_CODE').sum()
+st_op_st_op_gen = b.d['GeneratorY09_Exist'].set_index('PLANT_CODE', drop=False).loc[st_wecc_op_stix]
+st_op_st_op_gen = st_op_st_op_gen.loc[st_op_st_op_gen['PRIME_MOVER'].isin(['ST', 'CA', 'BT'])].groupby('PLANT_CODE').sum()
+
+ST_WECC_OP['CAP_FRAC'] = st_op_st_op_gen['NAMEPLATE']/st_op_tot_gen['NAMEPLATE']
+
+
+post_pp_d.update({'st_rc' : ST_WECC_RC})
+post_pp_d.update({'st_op' : ST_WECC_OP})
+
+
+ST_WECC_RC.iloc[:, 308:321].mean()
+ST_WECC_OP.iloc[:, 308:321].mean()
+#ST_WECC_RC[['PNAME', 'LAT', 'LON', 'CAPFAC', 'NAMEPCAP', 'PLPRMFL', 'WR_REG', 'W_SRC', 'PCODE']].dropna(subset=['LAT']).to_csv('ST_WECC_RC.csv')
+#ST_WECC_OP[['PNAME', 'LAT', 'LON', 'CAPFAC', 'NAMEPCAP', 'PLPRMFL', 'WR_REG', 'W_SRC', 'PCODE']].dropna(subset=['LAT']).to_csv('ST_WECC_OP.csv')
+
 
 ####GET SOLAR PV##########################
+
 PVix = b.d['eGRID_2009_gen']['ORISPL'].ix[b.d['eGRID_2009_gen']['PRMVR'] == 'PV'].drop_duplicates()
 #WECC_PV = b.d['eGRID_2009_plant'].loc[(b.d['eGRID_2009_plant']['PLPRMFL'] == 'SUN') & (b.d['eGRID_2009_plant']['NERC'] == 'WECC')]
 WECC_PV = b.d['eGRID_2009_plant'].loc[b.d['eGRID_2009_plant']['NERC'] == 'WECC']
@@ -168,7 +300,6 @@ PV_WECC['W_SRC'] = PV_WECC['Reported Water Source (Type)']
 del PV_WECC['Reported Water Source (Type)']
 PV_WECC['PCODE'] = PV_WECC.index
 
-
 for i, k in PV_WECC['WR_REG'].loc[PV_WECC['WR_REG'].isnull()].iteritems():
 #	print i, k
 	fn_d = {}
@@ -182,7 +313,18 @@ for i, k in PV_WECC['WR_REG'].loc[PV_WECC['WR_REG'].isnull()].iteritems():
 	cell = min(fn_d, key=fn_d.get)
 	PV_WECC['WR_REG'][i] = cell
 
-PV_WECC.to_csv('PV_WECC.csv')
+pv_wecc_stix = [i for i in PV_WECC.index]
+
+pv_tot_gen = b.d['GeneratorY09_Exist'].set_index('PLANT_CODE', drop=False).loc[pv_wecc_stix].groupby('PLANT_CODE').sum()
+pv_pv_gen = b.d['GeneratorY09_Exist'].set_index('PLANT_CODE', drop=False).loc[pv_wecc_stix]
+pv_pv_gen = pv_pv_gen.loc[pv_pv_gen['PRIME_MOVER'] == 'PV'].groupby('PLANT_CODE').sum()
+
+PV_WECC['CAP_FRAC'] = pv_pv_gen['NAMEPLATE']/pv_tot_gen['NAMEPLATE']
+
+post_pp_d.update({'pv' : PV_WECC})
+
+
+#PV_WECC.to_csv('PV_WECC.csv')
 
 ######GET WIND TURBINES######################################
 
@@ -216,7 +358,26 @@ for i, k in WN_WECC['WR_REG'].loc[WN_WECC['WR_REG'].isnull()].iteritems():
 	cell = min(fn_d, key=fn_d.get)
 	WN_WECC['WR_REG'][i] = cell
 
-WN_WECC.to_csv('WN_WECC.csv')
+
+
+wn_wecc_stix = [i for i in WN_WECC.index]
+
+wn_tot_gen = b.d['GeneratorY09_Exist'].set_index('PLANT_CODE', drop=False).loc[wn_wecc_stix].groupby('PLANT_CODE').sum()
+wn_wn_gen = b.d['GeneratorY09_Exist'].set_index('PLANT_CODE', drop=False).loc[wn_wecc_stix]
+wn_wn_gen = wn_wn_gen.loc[wn_wn_gen['PRIME_MOVER'] == 'WT'].groupby('PLANT_CODE').sum()
+
+WN_WECC['CAP_FRAC'] = wn_wn_gen['NAMEPLATE']/wn_tot_gen['NAMEPLATE']
+
+post_pp_d.update({'wn' : WN_WECC})
+
+
+
+
+pickle.dump(post_pp_d, open('post_pp_d.p', 'wb'))
+
+
+
+#WN_WECC.to_csv('WN_WECC.csv')
 
 '''
 #############
