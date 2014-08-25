@@ -271,6 +271,52 @@ st_op_st_op_gen = st_op_st_op_gen.loc[st_op_st_op_gen['PRIME_MOVER'].isin(['ST',
 
 ST_WECC_OP['CAP_FRAC'] = st_op_st_op_gen['NAMEPLATE']/st_op_tot_gen['NAMEPLATE']
 
+## ADD 767 DATA
+
+eia_767 = b.d['F767_GENERATOR'].set_index('PLANT_CODE', drop=False)
+eia_767['TEMP_RISE_AT_100_PCT'] = eia_767['TEMP_RISE_AT_100_PCT'].replace(to_replace={'EN' : np.nan, 'NA': np.nan, ' NA':np.nan}).astype(float)
+eia_767['WATER_FLOW_100_PCT'] = eia_767['WATER_FLOW_100_PCT'].replace(to_replace={'EN' : np.nan, 'NA': np.nan, ' NA':np.nan, '10,000':10000}).astype(float) 
+eia_767['FLOW_RISE'] = eia_767['TEMP_RISE_AT_100_PCT']*eia_767['WATER_FLOW_100_PCT']
+
+
+water_flow_rc = eia_767.loc[st_wecc_rc_stix].groupby('PLANT_CODE').sum()['WATER_FLOW_100_PCT']
+temp_rise_rc = (eia_767.loc[st_wecc_rc_stix].groupby('PLANT_CODE').sum()['FLOW_RISE'])/water_flow_rc
+rc_water = pd.concat([water_flow_rc, temp_rise_rc], axis=1)
+rc_water['WATER_FLOW'] = rc_water[0]
+rc_water['TEMP_RISE'] = rc_water[1]
+del rc_water[0]
+del rc_water[1]
+
+ST_WECC_RC = pd.concat([ST_WECC_RC, rc_water], axis=1)
+ST_WECC_RC = ST_WECC_RC[['PNAME', 'LAT', 'LON', 'CAPFAC', 'NAMEPCAP', 'NAMEPLATE', 'PLPRMFL', 'WR_REG', 'W_SRC', 'PCODE', 'CAP_FRAC', 'Intake Peak Winter Temperature', 'Outlet Peak Winter Temperature', 'Intake Peak Summer Temperature', 'Outlet Peak Summer Temperature', 'INTAKE_RATE_AT_100_PCT', 'TOWER_WATER_RATE_PCT', 'WATER_FLOW', 'TEMP_RISE', 'ELEC_EFF_JAN', 'ELEC_EFF_FEB', 'ELEC_EFF_MAR', 'ELEC_EFF_APR', 'ELEC_EFF_MAY', 'ELEC_EFF_JUN', 'ELEC_EFF_JUL', 'ELEC_EFF_AUG', 'ELEC_EFF_SEP', 'ELEC_EFF_OCT', 'ELEC_EFF_NOV', 'ELEC_EFF_DEC', 'ELEC_EFF_AVG']]
+ST_WECC_RC.fillna(np.nan, inplace=True)
+
+kos_map = lambda x: 0.12 if x['PLPRMFL'] in ['ANT', 'BIT', 'LIG', 'SUB', 'SC', 'RC', 'WC'] else 0 if x['PLPRMFL'] in ['NUC', 'GEO'] else 0.2
+
+ST_WECC_RC['Kos'] = ST_WECC_RC.apply(kos_map, axis=1)
+
+
+ST_WECC_RC['WCIRC_CALC'] = (ST_WECC_RC['NAMEPLATE']*ST_WECC_RC['CAP_FRAC']*(1-ST_WECC_RC['ELEC_EFF_AVG'] - ST_WECC_RC['Kos'])/ST_WECC_RC['ELEC_EFF_AVG'])/(0.004179*ST_WECC_RC['TEMP_RISE']/1.8)/28.32
+
+ST_WECC_RC['WCIRC_CALC'].replace(to_replace={np.inf : np.nan, -np.inf : np.nan}, inplace=True)
+
+water_flow_op = eia_767.loc[st_wecc_op_stix].groupby('PLANT_CODE').sum()['WATER_FLOW_100_PCT']
+temp_rise_op = (eia_767.loc[st_wecc_op_stix].groupby('PLANT_CODE').sum()['FLOW_RISE'])/water_flow_op
+op_water = pd.concat([water_flow_op, temp_rise_op], axis=1)
+op_water['WATER_FLOW'] = op_water[0]
+op_water['TEMP_RISE'] = op_water[1]
+del op_water[0]
+del op_water[1]
+
+ST_WECC_OP = pd.concat([ST_WECC_OP, op_water], axis=1)
+ST_WECC_OP = ST_WECC_OP[['PNAME', 'LAT', 'LON', 'CAPFAC', 'NAMEPCAP', 'NAMEPLATE', 'PLPRMFL', 'WR_REG', 'W_SRC', 'PCODE', 'CAP_FRAC', 'Intake Peak Winter Temperature', 'Outlet Peak Winter Temperature', 'Intake Peak Summer Temperature', 'Outlet Peak Summer Temperature', 'INTAKE_RATE_AT_100_PCT', 'TOWER_WATER_RATE_PCT', 'WATER_FLOW', 'TEMP_RISE', 'ELEC_EFF_JAN', 'ELEC_EFF_FEB', 'ELEC_EFF_MAR', 'ELEC_EFF_APR', 'ELEC_EFF_MAY', 'ELEC_EFF_JUN', 'ELEC_EFF_JUL', 'ELEC_EFF_AUG', 'ELEC_EFF_SEP', 'ELEC_EFF_OCT', 'ELEC_EFF_NOV', 'ELEC_EFF_DEC', 'ELEC_EFF_AVG']]
+ST_WECC_OP.fillna(np.nan, inplace=True)
+
+ST_WECC_OP['Kos'] = ST_WECC_OP.apply(kos_map, axis=1)
+
+ST_WECC_OP['WCOND_CALC'] = (ST_WECC_OP['NAMEPLATE']*ST_WECC_OP['CAP_FRAC']*(1-ST_WECC_OP['ELEC_EFF_AVG'] - ST_WECC_OP['Kos'])/ST_WECC_OP['ELEC_EFF_AVG'])/(0.004179*ST_WECC_OP['TEMP_RISE']/1.8)/28.32
+
+ST_WECC_OP['WCOND_CALC'].replace(to_replace={np.inf : np.nan, -np.inf : np.nan}, inplace=True)
 
 post_pp_d.update({'st_rc' : ST_WECC_RC})
 post_pp_d.update({'st_op' : ST_WECC_OP})
@@ -481,5 +527,7 @@ NW	Natural draft, wet process
 WD	Combination wet and dry process
 OT	Other
 
+Outlet enthalpy:
+http://www.che.com/nl/YToyOntpOjA7czo0OiI4OTQ5IjtpOjE7czo4NjoicHJvY2Vzc2luZ19hbmRfaGFuZGxpbmcvdGhlcm1hbF9hbmRfZW5lcmd5X21nbXQvaGVhdF9leGNoYW5nZXJzX2NvbmRlbnNlcnNfYW5kX2Nvb2xlcnMiO30=/
 '''
 

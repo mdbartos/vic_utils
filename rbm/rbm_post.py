@@ -21,8 +21,8 @@ class rbm_post():
 		self.spat_d = {}
 		self.cell_d = {}
 		self.ll_d = {}
-		self.ext_wt = pd.DataFrame()
-		self.ext_atmo = pd.DataFrame()
+#		self.ext_wt = pd.DataFrame()
+		self.ext_cat_df = pd.DataFrame()
 		self.rc_rout_path = rc_rout_path
 		self.op_rout_path = op_rout_path
 		self.post_pp_d = pickle.load(open(post_pp_d_path, 'rb'))
@@ -125,8 +125,8 @@ class rbm_post():
 
 			atmo_str = StringIO(line_d['atmo'])
 			atmo_df = pd.read_table(atmo_str, skiprows=5)
-			atmo_df = atmo_df.rename(columns = {'# YEAR': 'YEAR'})
-			self.ext_atmo = atmo_df
+			atmo_df.columns = ['YEAR', 'MONTH', 'DAY', 'OUT_AIR_TEMP', 'OUT_PRESSURE', 'OUT_DENSITY', 'OUT_VP', 'OUT_VPD', 'OUT_QAIR', 'OUT_REL_HUMID']
+#			self.ext_atmo = atmo_df
 			ad =  lambda x: datetime.date(int(x['YEAR']), int(x['MONTH']), int(x['DAY']))
 			atmo_df['DATE'] = atmo_df.apply(ad, axis=1)
 			atmo_df = atmo_df.set_index('DATE')
@@ -140,6 +140,7 @@ class rbm_post():
 				rout_fn = rout_fn + ' '*(5-len(rout_fn))
 			rout_df = pd.read_fwf('%s/%s.day' % (rc_rout_path, rout_fn), header=None, widths=[12, 12, 12, 13])
 			rout_df.columns = ['routyear', 'routmonth', 'routday', 'FLOW_CFS']
+			rout_df['FLOW_M3S'] = rout_df['FLOW_CFS']*0.0283168466
 			mkdate = lambda x: datetime.date(int(x['routyear']), int(x['routmonth']), int(x['routday']))
 			rout_df['date'] = rout_df.apply(mkdate, axis=1)
 			rout_df = rout_df.set_index('date')
@@ -152,22 +153,69 @@ class rbm_post():
 			del cat_df['routyear']
 			del cat_df['routmonth']
 			del cat_df['routday']
-			print cat_df
 
 #INDEX POST_PP_D TO PCODE HERE; CAN SAVE TO VARIABLES/DICTS
 
 			#ATMO ARRAYS
+			rc = self.post_pp_d['st_rc'].loc[pcode]
+
+
 			Pws = 100*cat_df['OUT_VP']/cat_df['OUT_REL_HUMID']
 			Twb = (cat_df['OUT_VP'] + 0.000662*(cat_df['OUT_PRESSURE']*cat_df['OUT_AIR_TEMP']))/(Pws + 0.000662*cat_df['OUT_PRESSURE'])
 			Bf = 0.6219907
 			Oin = Bf*cat_df['OUT_VP']/(cat_df['OUT_PRESSURE'] - cat_df['OUT_VP'])
 			Oout = Bf*Pws/(cat_df['OUT_PRESSURE'] - Pws)
 			Hin = (cat_df['OUT_AIR_TEMP']*(1.01 + 1.89*Oin) + 2500*Oin)/1000
-			Hout = (cat_df['OUT_AIR_TEMP']*(1.01 + 1.89*Oout) + 2500*Oout)/1000
+#			Hout = (cat_df['OUT_AIR_TEMP']*(1.01 + 1.89*Oout) + 2500*Oout)/1000 ##TEMP ISN"T THE SAME AS Hin!!
+			sigma = 0.8
+			hfg = 2.45 #MJ/kg
+			cpw = 0.004179 #MJ/kg-k
+			gamma_func = lambda x: 0.7 if x['MONTH'] in [4,5,6,7,8,9] else 0.9 
+			gamma = cat_df.apply(gamma_func, axis=1)
+			ncc = 6
+			tau = (1 - (ncc-1)/ncc) 
+			Tc = Twb + 6
+
+			
+			if np.isnan(rc['WCIRC_CALC']) == False:
+				Wcirc = rc['WCIRC_CALC']
+				Wmu = sigma*(Oout - Oin)*rc['WCIRC_CALC']
+			elif np.isnan(rc['WATER_FLOW']) == False:
+				Wcirc = rc['WATER_FLOW']
+				Wmu = sigma*(Oout - Oin)*rc['WATER_FLOW']
+			else:
+				Ksens_reg = lambda x: -0.000279*x['OUT_AIR_TEMP']**3 + 0.00109*x['OUT_AIR_TEMP']**2 - 0.345*x['OUT_AIR_TEMP'] + 26.7
+				Ksens = cat_df.apply(Ksens_reg, axis=1)
+				Wevap = (rc['NAMEPLATE']*(1-rc['ELEC_EFF_AVG'] - rc['Kos'])*(1-Ksens)/(rc['ELEC_EFF_AVG']*hfg))/28.32
+				Wmu = ncc*Wevap/(ncc-1)
+				Wcirc = Wmu/(sigma*(Oout - Oin))
+
+			if np.isnan(rc['TEMP_RISE']) == False:
+				Trange = rc['TEMP_RISE']/1.8
+			else:
+				Trange = (rc['NAMEPLATE']*(1-rc['ELEC_EFF_AVG'] - rc['Kos']))/(Wcirc*rc['ELEC_EFF_AVG']*cpw)
+
+			Hout = Hin + (sigma*Trange*0.004186)
+#			Tout = (1000*(sigma*cpw*Trange+Hin) - 2500*Oout)/(1.01+1.89*Oout)
+#			Hout = (Tout*(1.01 + 1.89*Oout) + 2500*Oout)/1000  
 
 
-			pprow = self.post_pp_d['st_rc'].loc[pcode]
+	#		cat_df['Wevap'] = Wevap
+			cat_df['Wmu'] = Wmu
+			cat_df['Wcirc'] = Wcirc
+			cat_df['Constr_Flow_CFS'] = gamma*cat_df['FLOW_CFS']
+			Wmu_min = cat_df[['Wmu', 'Constr_Flow_CFS']].min(axis=1)
+			cat_df['Wcirc_Constr'] = Wmu_min/(sigma*(Oout - Oin))
+			cat_df['H_diff'] = Hout - Hin
+	#		cat_df['H_in'] = Hin
+			cat_df['O_diff'] = Oout - Oin
+	#		cat_df['O_in'] = Oin
 
+			cat_df['POWER_CAP_MW'] = (1000*0.028317*cat_df['Wcirc_Constr'])*(Hout + Tc*cpw*tau*(Oout - Oin) - cat_df['WTEMP']*cpw*(Oout - Oin) - Hin)/(sigma*(1-rc['ELEC_EFF_AVG'] - rc['Kos'])/rc['ELEC_EFF_AVG'])
+			
+			self.ext_cat_df = cat_df
+
+			print cat_df
 			cat_df.to_csv('%s/%s.%s' % (wpath, scen, str(pcode).split('.')[0]), sep='\t')
 				
 
@@ -242,7 +290,7 @@ class rbm_post():
 
 
 
-b = rbm_post('/home/chesterlab/Bartos/VIC/input/dict/opstn.p', '/home/chesterlab/Bartos/VIC/input/dict/rcstn.p', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/rbm/run', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/st_rc', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/rout/rc/d8', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/rout/op/d8')
+b = rbm_post('/home/chesterlab/Bartos/VIC/input/dict/opstn.p', '/home/chesterlab/Bartos/VIC/input/dict/rcstn.p', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/rbm/run', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/st_rc', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/rout/rc/d8', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/rout/op/d8', '/home/chesterlab/Bartos/VIC/input/dict/post_pp_d.p')
 
 b.make_spat_d()
 
