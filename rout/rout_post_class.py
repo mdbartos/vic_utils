@@ -23,7 +23,7 @@ class rout_post():
 	def init_datum(self):
 		for scen in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:
 			self.datum_d.update({scen : {'d' : None, 'm' : None}})
-			if scen = 'hist':
+			if scen == 'hist':
 				self.datum_d[scen]['d'] = hist_datum_day
 				self.datum_d[scen]['m'] = hist_datum_month
 			else:
@@ -33,38 +33,38 @@ class rout_post():
 
 	def rout_tables(self, basin, scen, typ, rpath):
 		
-		if not basin in inflow_o.keys():
+		if not basin in self.inflow_o.keys():
 			self.inflow_o.update({basin : {}})
-		if not scen in inflow_o[basin].keys():
-			self.inflow_o[basin].update({scen : {})
-		if not typ in inflow_o[basin][scen].keys():
+		if not scen in self.inflow_o[basin].keys():
+			self.inflow_o[basin].update({scen : {}})
+		if not typ in self.inflow_o[basin][scen].keys():
 			self.inflow_o[basin][scen].update({typ : None})
 
 		inflow_d = {}
 
 		slugtable = self.latlon_c[basin].set_index('slug')
 		print slugtable
-		fullpath = '%s/%s/%s' % (rpath, basin, scen) 
+		fullpath = '%s/%s/%s' % (rpath, scen, basin) 
 		for fn in os.listdir(fullpath):
 			sp_typ = fn.split('.')
 			sp_nm = sp_typ[0].split('_')
 			pcode = slugtable['PCODE'].loc[sp_nm[-1].split()[0]]	
 			if typ == 'd':
-				if (sp_typ[1] == 'day') and (sp_nm[-1] in slugtable.index):
+				if (sp_typ[1] == 'day') and (sp_nm[-1].split()[0] in slugtable.index):
 					n = pd.read_fwf('%s/%s' % (fullpath, fn), header=None, widths=[12, 12, 12, 13])
 					n.columns = ['year', 'month', 'day', '%s' % (pcode)]
-					mkdate = lambda x: datetime.date(x['year'], x['month'], x['day'])
+					mkdate = lambda x: datetime.date(int(x['year']), int(x['month']), int(x['day']))
 					n['date'] = n.apply(mkdate, axis=1)
 					n = n.set_index('date')
 					n = n['%s' % (pcode)]
-					inflow_d.update({slugtable['PCODE'].loc[pcode: n})
+					inflow_d.update({pcode: n})
 
 			
 			if typ == 'm':
-				if (sp_typ[1] == 'month') and (sp_nm[-1] == in slugtable.index):
+				if (sp_typ[1] == 'month') and (sp_nm[-1].split()[0] in slugtable.index):
 					n = pd.read_fwf('%s/%s' % (fullpath, fn), header=None, widths=[12, 12, 13])
 					n.columns = ['year', 'month', '%s' % (pcode)]
-					mkdate = lambda x: datetime.date(x['year'], x['month'], 1)
+					mkdate = lambda x: datetime.date(int(x['year']), int(x['month']), 1)
 					n['date'] = n.apply(mkdate, axis=1)
 					n = n.set_index('date')
 					n = n['%s' % (pcode)]
@@ -115,34 +115,34 @@ class rout_post():
 					self.inflow_n.update({'%s-normalized' % (i) : norm})
 				
 
-
-	for i, k in self.inflow_n.items():
-		if ('castaic' in i) or ('corona' in i) or ('riohondo' in i) or ('coyotecr' in i) or ('redmtn' in i):
-			newmel = self.inflow_n['pitt-%s-%s-normalized' % (i.split('-')[1], i.split('-')[2])][6158]
-			bishp = self.inflow_n['cottonwood-%s-%s-normalized' % (i.split('-')[1], i.split('-')[2])][326]
-			gila = self.inflow_n['imperial-%s-%s-normalized' % (i.split('-')[1], i.split('-')[2])][-9999]
-			transf = pd.concat([newmel, bishp, gila], axis=1)
-			n = k
-			print n
-			ncol = [p for p in n.columns if type(p) == float]
-			for x in ncol:
-				n[x] = n[x]*0.396 + newmel*0.255 + bishp*0.089 + gila*0.264
-			self.inflow_a.update({i : n})
-		elif ('tulare' in i):
-			newmel = self.inflow_n['pitt-%s-%s-normalized' % (i.split('-')[1], i.split('-')[2])][6158]
-			friant = self.inflow_n['pitt-%s-%s-normalized' % (i.split('-')[1], i.split('-')[2])][50393]
-			transf = pd.concat([newmel, friant], axis=1)
-			n = k
-			ncol = [p for p in n.columns if type(p) == float]
-			for x in ncol:
-				n[x] = n[x]*0.678 + newmel*0.22 + friant*0.102
-			self.inflow_a.update({i : n})
-		else:
-			self.inflow_a.update({i : k})			
-			
-	for i, k in self.inflow_a.items():
-		k.to_csv('./tables_normalized/%s/%s.csv' % (i.split('-')[1], i))
-
+	def adjust_normalized(self):
+		for i, k in self.inflow_n.items():
+			if ('castaic' in i) or ('corona' in i) or ('riohondo' in i) or ('coyotecr' in i) or ('redmtn' in i):
+				newmel = self.inflow_n['pitt-%s-%s-normalized' % (i.split('-')[1], i.split('-')[2])][6158]
+				bishp = self.inflow_n['cottonwood-%s-%s-normalized' % (i.split('-')[1], i.split('-')[2])][326]
+				gila = self.inflow_n['imperial-%s-%s-normalized' % (i.split('-')[1], i.split('-')[2])][-9999]
+				transf = pd.concat([newmel, bishp, gila], axis=1)
+				n = k
+				print n
+				ncol = [p for p in n.columns if type(p) == float]
+				for x in ncol:
+					n[x] = n[x]*0.396 + newmel*0.255 + bishp*0.089 + gila*0.264
+				self.inflow_a.update({i : n})
+			elif ('tulare' in i):
+				newmel = self.inflow_n['pitt-%s-%s-normalized' % (i.split('-')[1], i.split('-')[2])][6158]
+				friant = self.inflow_n['pitt-%s-%s-normalized' % (i.split('-')[1], i.split('-')[2])][50393]
+				transf = pd.concat([newmel, friant], axis=1)
+				n = k
+				ncol = [p for p in n.columns if type(p) == float]
+				for x in ncol:
+					n[x] = n[x]*0.678 + newmel*0.22 + friant*0.102
+				self.inflow_a.update({i : n})
+			else:
+				self.inflow_a.update({i : k})			
+				
+		for i, k in self.inflow_a.items():
+			k.to_csv('./tables_normalized/%s/%s.csv' % (i.split('-')[1], i))
+'''
 	##########################
 
 	cali_basins = ['castaic', 'corona', 'cottonwood', 'coyotecr', 'kern', 'pitt', 'redmtn', 'riohondo', 'rushcr', 'tulare']
@@ -204,7 +204,7 @@ class rout_post():
 		print dupr
 		t = t.iloc[:, dupr]
 		t.to_csv('./combined_tables_norm/%s/%s_colo.csv' % (a, a))
-
+'''
 
 b = rout_post('/home/chesterlab/Bartos/VIC/input/dict/hydrostn.p')
 
