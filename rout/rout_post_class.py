@@ -13,13 +13,16 @@ import datetime
 
 class rout_post():
 
-	def __init__(self, picklepath):
+	def __init__(self, picklepath, egrid_path):
 		self.inflow_o = {}
 		self.inflow_m = {}
 		self.inflow_n = {}
 		self.inflow_a = {}
 		self.latlon_c = pickle.load(open(picklepath, 'rb'))
-	
+		self.egrid = pickle.load(open(egrid_path, 'rb'))
+		self.power_reg = {}
+		self.p_reg = {}
+
 	def init_datum(self):
 		for scen in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:
 			self.datum_d.update({scen : {'d' : None, 'm' : None}})
@@ -76,7 +79,7 @@ class rout_post():
 		
 	##########################################	
 
-	def adjust_colo(self, basin, scen, typ):
+	def adjust_colo(self, scen, typ):
 
 		self.inflow_o['hoover'][scen][typ][154] =  self.inflow_o['hoover'][scen][typ][154] + self.inflow_o['lees_f'][scen][typ][-9999] + self.inflow_o['little_col'][scen][typ][-9999] + self.inflow_o['gc'][scen][typ][-9999] +  self.inflow_o['virgin'][scen][typ][-9999]
 
@@ -90,6 +93,35 @@ class rout_post():
 	
 	##########################################
 	
+	def make_egrid(self, basin):
+		
+		self.p_reg.update({basin : {}})
+		
+		pkeys = self.inflow_o[basin]['hist']['d'].keys()
+		
+		p_reg = {}
+
+		for i in pkeys:
+			
+			p_reg.update({i : {'power' : [], 'rout' : []}})
+
+			for j in self.egrid.keys():
+			
+				year = int(j.split('_')[1])
+				if int(ast.literal_eval(i)) in self.egrid[j]['ORISPL'].values:
+					hy_p = self.egrid[j].set_index('ORISPL').loc[int(ast.literal_eval(i))]
+					nameplate = float(hy_p['NAMEPCAP'])
+					capfac = float(hy_p['CAPFAC'])
+					if datetime.date(year, 1, 1) in self.inflow_o[basin]['hist']['d'][i].index:
+						rout = self.inflow_o[basin]['hist']['d'][i].loc[datetime.date(year, 1, 1):datetime.date(year, 12, 31)].mean()
+						print year, i, nameplate*capfac, rout
+						p_reg[i]['power'].append(nameplate*capfac)
+						p_reg[i]['rout'].append(rout)
+
+		self.p_reg[basin] = p_reg
+
+				
+
 	def make_mean(self):
 		for i, k in self.inflow_o.items():
 			if 'hist' in i:
@@ -206,9 +238,11 @@ class rout_post():
 		t.to_csv('./combined_tables_norm/%s/%s_colo.csv' % (a, a))
 '''
 
-b = rout_post('/home/chesterlab/Bartos/VIC/input/dict/hydrostn.p')
+b = rout_post('/home/chesterlab/Bartos/VIC/input/dict/hydrostn.p','/home/chesterlab/Bartos/VIC/input/dict/egrid_plant.p')
 
 b.rout_tables('lees_f', 'hist', 'd', '/home/chesterlab/Bartos/VIC/output/rout/d8')
+#b.adjust_colo('hist', 'd')
+b.make_egrid('lees_f')
 
 for i in self.latlon_c.keys():
 	rout_tables(i, 'hist', 'm')
