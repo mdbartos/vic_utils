@@ -131,6 +131,7 @@ class rbm_post():
 		atmo_path = self.atm_path + '/' + scen
 		rc_rout_path = self.rc_rout_path + '/' + scen + '/' + basin
 		for pcode in self.st_d['st_rc'][basin]['PCODE'].values:
+			print pcode
 #			with open('%s/%s.%s' % (wpath, scen, str(pcode).split('.')[0]), 'w') as outfile:
 			line_d = {}
 			set_li = []
@@ -139,7 +140,7 @@ class rbm_post():
 				cell = self.cell_d['st_rc'][basin][pcode]
 
 				if os.path.exists(wtemp_path):
-					with open('%s/%s.Temp' % (wtemp_path, scen), 'rb') as wtempfile:
+					with open('%s/%s.Temp' % (wtemp_path, scen), 'r') as wtempfile:
 						line_d.update({'wtemp' : []})
 						for line in wtempfile:
 							sp = line.split()
@@ -152,7 +153,11 @@ class rbm_post():
 					wtemp_df = wtemp_df.groupby('YEAR').mean()
 					wtemp_df = wtemp_df.reset_index()
 					wtemp_df['ord'] = wtemp_df.index
-					wd =  lambda x: datetime.date.fromordinal((datetime.date(1949, 1, 1)).toordinal() + int(x['ord']))
+					if scen == 'hist':
+						wd =  lambda x: datetime.date.fromordinal((datetime.date(1949, 1, 1)).toordinal() + int(x['ord']))
+					else:
+
+						wd =  lambda x: datetime.date.fromordinal((datetime.date(2010, 1, 1)).toordinal() + int(x['ord']))
 					wtemp_df['DATE'] = wtemp_df.apply(wd, axis=1)
 					del wtemp_df['ord']
 					wtemp_df = wtemp_df.set_index('DATE')
@@ -180,7 +185,7 @@ class rbm_post():
 
 
 
-			with open('%s/full_data_%s_%s' % (atmo_path, atmo_lat, atmo_lon)) as atmofile:
+			with open('%s/full_data_%s_%s' % (atmo_path, atmo_lat, atmo_lon), 'r') as atmofile:
 				line_d.update({'atmo' : ''.join(atmofile.readlines())})
 
 
@@ -197,8 +202,8 @@ class rbm_post():
 
 
 			rout_fn = basin + '_' + self.st_rc[basin].set_index('PCODE').loc[pcode]['slug']
-			if len(rout_fn.split('_')[1]) < 5:
-				rout_fn = rout_fn + ' '*(5-len(rout_fn.split('_')[1]))
+			if len(rout_fn.split('_')[-1]) < 5:
+				rout_fn = rout_fn + ' '*(5-len(rout_fn.split('_')[-1]))
 			rout_df = pd.read_fwf('%s/%s.day' % (rc_rout_path, rout_fn), header=None, widths=[12, 12, 12, 13])
 			rout_df.columns = ['routyear', 'routmonth', 'routday', 'FLOW_CFS']
 			rout_df['FLOW_M3S'] = rout_df['FLOW_CFS']*0.0283168466
@@ -308,7 +313,11 @@ class rbm_post():
 				wtemp_df = wtemp_df.groupby('YEAR').mean()
 				wtemp_df = wtemp_df.reset_index()
 				wtemp_df['ord'] = wtemp_df.index
-				wd =  lambda x: datetime.date.fromordinal((datetime.date(1949, 1, 1)).toordinal() + int(x['ord']))
+				if scen == 'hist':
+					wd =  lambda x: datetime.date.fromordinal((datetime.date(1949, 1, 1)).toordinal() + int(x['ord']))
+				else:
+					wd =  lambda x: datetime.date.fromordinal((datetime.date(2010, 1, 1)).toordinal() + int(x['ord']))
+
 				wtemp_df['DATE'] = wtemp_df.apply(wd, axis=1)
 				del wtemp_df['ord']
 				wtemp_df = wtemp_df.set_index('DATE')
@@ -316,8 +325,8 @@ class rbm_post():
 
 
 			rout_fn = basin + '_' + self.st_op[basin].set_index('PCODE').loc[pcode]['slug']
-			if len(rout_fn.split('_')[1]) < 5:
-				rout_fn = rout_fn + ' '*(5-len(rout_fn.split('_')[1]))
+			if len(rout_fn.split('_')[-1]) < 5:
+				rout_fn = rout_fn + ' '*(5-len(rout_fn.split('_')[-1]))
 
 			rout_df = pd.read_fwf('%s/%s.day' % (op_rout_path, rout_fn), header=None, widths=[12, 12, 12, 13])
 			rout_df.columns = ['routyear', 'routmonth', 'routday', 'FLOW_CFS']
@@ -497,7 +506,11 @@ class rbm_post():
 			df_scen.to_csv('%s/%s.%s' % (wpath, scen, j), sep='\t')
 
 
-b = rbm_post('/home/chesterlab/Bartos/VIC/input/dict/opstn.p', '/home/chesterlab/Bartos/VIC/input/dict/rcstn.p', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/rbm/run', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/st_rc', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/rout/rc/d8', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/rout/op/d8', '/home/chesterlab/Bartos/VIC/input/dict/post_pp_d.p', '/home/chesterlab/Bartos/VIC/input/dict/tech_d.p')
+#b = rbm_post('/home/chesterlab/Bartos/VIC/input/dict/opstn.p', '/home/chesterlab/Bartos/VIC/input/dict/rcstn.p', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/rbm/run', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/st_rc', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/rout/rc/d8', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/rout/op/d8', '/home/chesterlab/Bartos/VIC/input/dict/post_pp_d.p', '/home/chesterlab/Bartos/VIC/input/dict/tech_d.p')
+
+####### WITH SYMLINK FIX
+
+b = rbm_post('/home/chesterlab/Bartos/VIC/input/dict/opstn.p', '/home/chesterlab/Bartos/VIC/input/dict/rcstn.p', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/rbm/run', '/home/chesterlab/Bartos/VIC/output/st_rc', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/rout/rc/d8', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/rout/op/d8', '/home/chesterlab/Bartos/VIC/input/dict/post_pp_d.p', '/home/chesterlab/Bartos/VIC/input/dict/tech_d.p')
 
 b.make_spat_d()
 
@@ -509,22 +522,146 @@ b.make_diff()
 
 b.import_mohseni('/home/chesterlab/Bartos/pre/mohseni_bayes')
 
-b.make_rc_outfiles('hist', 'hoover', '/home/chesterlab/Bartos/post/rc')
+###
 
-#b.make_rc_outfiles('hist', 'little_col', '/home/chesterlab/Bartos/post/rc')
+for s in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:
+#	for g in b.st_op.keys():
+#		b.make_op_outfiles(s, g, '/home/chesterlab/Bartos/post/op')
+	
+
+	b.make_rc_outfiles(s, 'little_col', '/home/chesterlab/Bartos/post/rc')
+	b.make_rc_outfiles(s, 'colstrip', '/home/chesterlab/Bartos/post/rc')
+	b.make_rc_outfiles(s, 'comanche', '/home/chesterlab/Bartos/post/rc')
+	b.make_rc_outfiles(s, 'parker', '/home/chesterlab/Bartos/post/rc')
+	b.make_rc_outfiles(s, 'hoover', '/home/chesterlab/Bartos/post/rc')
+	b.make_rc_outfiles(s, 'wauna', '/home/chesterlab/Bartos/post/rc')
+	b.make_rc_outfiles(s, 'wabuska', '/home/chesterlab/Bartos/post/rc')
+	b.make_rc_outfiles(s, 'paper', '/home/chesterlab/Bartos/post/rc')
+	b.make_rc_outfiles(s, 'guer', '/home/chesterlab/Bartos/post/rc')
+	b.make_rc_outfiles(s, 'glenn', '/home/chesterlab/Bartos/post/rc')
+	b.make_rc_outfiles(s, 'brigham', '/home/chesterlab/Bartos/post/rc')
+	b.make_rc_outfiles(s, 'intermtn', '/home/chesterlab/Bartos/post/rc') #### FLOW ACCUMULATION PROBLEM
+	b.make_rc_outfiles(s, 'pawnee', '/home/chesterlab/Bartos/post/rc')
+	b.make_rc_outfiles(s, 'salton', '/home/chesterlab/Bartos/post/rc')
+	b.make_rc_outfiles(s, 'pitt', '/home/chesterlab/Bartos/post/rc')
+	b.make_rc_outfiles(s, 'lees_f', '/home/chesterlab/Bartos/post/rc')
+	
+	for g in b.st_rc.keys():
+		print g
+		b.make_rc_outfiles(s, g, '/home/chesterlab/Bartos/post/rc')
 
 b.make_op_outfiles('hist', 'pitt', '/home/chesterlab/Bartos/post/op')
 
-b.get_ct('hist', '/home/chesterlab/Bartos/VIC/input/vic/forcing', '/home/chesterlab/Bartos/post/ct')
+###
 
-b.get_solar('hist', '/home/chesterlab/Bartos/VIC/output/solar', '/home/chesterlab/Bartos/post/pv')
-
-b.get_wind('hist', '/home/chesterlab/Bartos/VIC/input/vic/forcing', '/home/chesterlab/Bartos/post/wn')
-
-
-
+for s in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:
+#	b.get_ct(s, '/home/chesterlab/Bartos/VIC/input/vic/forcing', '/home/chesterlab/Bartos/post/ct')
+#	b.get_solar(s, '/home/chesterlab/Bartos/VIC/output/solar', '/home/chesterlab/Bartos/post/pv')
+	b.get_wind(s, '/home/chesterlab/Bartos/VIC/input/vic/forcing', '/home/chesterlab/Bartos/post/wn')
 
 
+################################################################
+
+import numpy as np
+import pandas as pd
+from pylab import *
+import os
+import datetime
+
+def post_plot(rpath, wpath):
+
+	li_1 = list(set([i.split('.')[1] for i in os.listdir(rpath)]))
+	
+	for pcode in li_1:
+		li_2 = [i for i in os.listdir(rpath) if i.endswith(pcode)]
+
+		d = {}
+
+		for j in li_2:
+			f = pd.read_csv('%s' % (rpath + '/' + j), sep='\t')
+			d.update({j : f})
+
+		g = d['hist.%s' % (pcode)].groupby(['MONTH', 'DAY.1']).mean().reset_index()  # FOR RC some basins, OP, PV needs to be 'DAY' instead of DAY.1
+		hist, = plot(g.index, g['POWER_CAP_MW'], label='historical')
+		g = d['ukmo_a1b.%s' % (pcode)].groupby(['MONTH', 'DAY.1']).mean().reset_index()
+		ukmo_a1b, = plot(g.index, g['POWER_CAP_MW'], label='ukmo-a1b')
+		g = d['ukmo_a2.%s' % (pcode)].groupby(['MONTH', 'DAY.1']).mean().reset_index()
+		ukmo_a2, = plot(g.index, g['POWER_CAP_MW'], label='ukmo-a2')
+		g = d['ukmo_b1.%s' % (pcode)].groupby(['MONTH', 'DAY.1']).mean().reset_index()
+		ukmo_b1, = plot(g.index, g['POWER_CAP_MW'], label='ukmo-b1')
+		g = d['echam_a1b.%s' % (pcode)].groupby(['MONTH', 'DAY.1']).mean().reset_index()
+		echam_a1b, = plot(g.index, g['POWER_CAP_MW'], label='echam-a1b')
+		g = d['echam_a2.%s' % (pcode)].groupby(['MONTH', 'DAY.1']).mean().reset_index()
+		echam_a2, = plot(g.index, g['POWER_CAP_MW'], label='echam-a2')
+		g = d['echam_b1.%s' % (pcode)].groupby(['MONTH', 'DAY.1']).mean().reset_index()
+		echam_b1, = plot(g.index, g['POWER_CAP_MW'], label='echam-b1')
+	
+		legend(loc=4)
+	
+		xlim([1,366])
+		title('Average daily useable capacity at Station %s' % (pcode))
+		xlabel('Day of year')
+		ylabel('Useable capacity (MW)')
+		
+		if not os.path.exists(wpath):
+			os.mkdir(wpath)
+
+		plt.savefig('%s/%s.png' % (wpath, pcode), bbox_inches='tight')
+		clf()
+
+def post_plot_wind_ct(rpath, wpath):
+
+	li_1 = list(set([i.split('.')[1] for i in os.listdir(rpath)]))
+	
+	for pcode in li_1:
+		li_2 = [i for i in os.listdir(rpath) if i.endswith(pcode)]
+
+		d = {}
+
+		for j in li_2:
+			f = pd.read_csv('%s' % (rpath + '/' + j), sep='\t', parse_dates=True)
+			d.update({j : f})
+		
+		for i in d.keys():
+			d[i]['date'] = pd.to_datetime(d[i]['date'])
+			mkmonth = lambda x: x['date'].month
+			mkday = lambda x: x['date'].day
+			d[i]['MONTH'] = d[i].apply(mkmonth, axis=1)
+			d[i]['DAY'] = d[i].apply(mkday, axis=1)
+
+		g = d['hist.%s' % (pcode)].groupby(['MONTH', 'DAY']).mean().reset_index() 
+		hist, = plot(g.index, g['POWER_CAP_MW'], label='historical')
+		g = d['ukmo_a1b.%s' % (pcode)].groupby(['MONTH', 'DAY']).mean().reset_index()
+		ukmo_a1b, = plot(g.index, g['POWER_CAP_MW'], label='ukmo-a1b')
+		g = d['ukmo_a2.%s' % (pcode)].groupby(['MONTH', 'DAY']).mean().reset_index()
+		ukmo_a2, = plot(g.index, g['POWER_CAP_MW'], label='ukmo-a2')
+		g = d['ukmo_b1.%s' % (pcode)].groupby(['MONTH', 'DAY']).mean().reset_index()
+		ukmo_b1, = plot(g.index, g['POWER_CAP_MW'], label='ukmo-b1')
+		g = d['echam_a1b.%s' % (pcode)].groupby(['MONTH', 'DAY']).mean().reset_index()
+		echam_a1b, = plot(g.index, g['POWER_CAP_MW'], label='echam-a1b')
+		g = d['echam_a2.%s' % (pcode)].groupby(['MONTH', 'DAY']).mean().reset_index()
+		echam_a2, = plot(g.index, g['POWER_CAP_MW'], label='echam-a2')
+		g = d['echam_b1.%s' % (pcode)].groupby(['MONTH', 'DAY']).mean().reset_index()
+		echam_b1, = plot(g.index, g['POWER_CAP_MW'], label='echam-b1')
+	
+		legend(loc=4)
+	
+		xlim([1,366])
+		title('Average daily useable capacity at Station %s' % (pcode))
+		xlabel('Day of year')
+		ylabel('Useable capacity (MW)')
+		
+		if not os.path.exists(wpath):
+			os.mkdir(wpath)
+
+		plt.savefig('%s/%s.png' % (wpath, pcode), bbox_inches='tight')
+		clf()
+
+#post_plot('/home/chesterlab/Bartos/post/rc/lees_f', '/home/chesterlab/Bartos/post/img/rc/lees_f')
+#post_plot('/home/chesterlab/Bartos/post/rc/colstrip', '/home/chesterlab/Bartos/post/img/rc/colstrip')
+post_plot('/home/chesterlab/Bartos/post/rc/pitt', '/home/chesterlab/Bartos/post/img/rc/pitt')
+
+post_plot('/home/chesterlab/Bartos/post/rc/pitt', '/home/chesterlab/Bartos/post/img/rc/pitt')
 
 #b = rbm_post('/media/chesterlab/My Passport/Files/VIC/input/dict/opstn.p', '/media/chesterlab/My Passport/Files/VIC/input/dict/rcstn.p', '/media/chesterlab/storage/post/rbm', '/media/chesterlab/storage/post/st_rc')
 
