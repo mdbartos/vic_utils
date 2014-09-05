@@ -30,6 +30,7 @@ class rbm_post():
 		self.post_pp_d = pickle.load(open(post_pp_d_path, 'rb'))
 		self.tech_d = pickle.load(open(tech_d_path, 'rb'))
 		self.mohseni_d = {}
+		self.eff_rc_d = self.post_pp_d['st_rc'].groupby('PLPRMFL').mean()['ELEC_EFF_AVG'].fillna(0.40)
 
 	def make_spat_d(self):
 		for fn in os.listdir(self.rbm_path):
@@ -246,25 +247,28 @@ class rbm_post():
 			ncc = 6
 			tau = (1 - (ncc-1)/ncc) 
 			Tc = Twb + 6
-
 			
-			if np.isnan(rc['WCIRC_CALC']) == False:
-				Wcirc = rc['WCIRC_CALC']
-				Wmu = sigma*(Oout - Oin)*rc['WCIRC_CALC']
-			elif np.isnan(rc['WATER_FLOW']) == False:
-				Wcirc = rc['WATER_FLOW']
-				Wmu = sigma*(Oout - Oin)*rc['WATER_FLOW']
+			if np.isnan(rc['ELEC_EFF_AVG']) == True:
+				plprmfl = rc['PLPRMFL']
+				rc['ELEC_EFF_AVG'] = self.eff_rc_d.loc[plprmfl]
+			
+	#		if np.isnan(rc['WCIRC_CALC']) == False:
+	#			Wcirc = rc['WCIRC_CALC']
+	#			Wmu = sigma*(Oout - Oin)*rc['WCIRC_CALC']
+			if np.isnan(rc['WATER_FLOW']) == False:
+				Wcirc = min(rc['WATER_FLOW'], rc['WCIRC_CALC'])
+				Wmu = sigma*(Oout - Oin)*Wcirc
 			else:
-				Ksens_reg = lambda x: -0.000279*x['OUT_AIR_TEMP']**3 + 0.00109*x['OUT_AIR_TEMP']**2 - 0.345*x['OUT_AIR_TEMP'] + 26.7
+				Ksens_reg = lambda x: (-0.000279*x['OUT_AIR_TEMP']**3 + 0.00109*x['OUT_AIR_TEMP']**2 - 0.345*x['OUT_AIR_TEMP'] + 26.7)/100
 				Ksens = cat_df.apply(Ksens_reg, axis=1)
-				Wevap = (rc['NAMEPLATE']*(1-rc['ELEC_EFF_AVG'] - rc['Kos'])*(1-Ksens)/(rc['ELEC_EFF_AVG']*hfg))/28.32
+				Wevap = (1/28.32)*(rc['NAMEPLATE']*rc['CAP_FRAC']*((1-rc['ELEC_EFF_AVG'] - rc['Kos'])/rc['ELEC_EFF_AVG'])*(1-Ksens))/hfg
 				Wmu = ncc*Wevap/(ncc-1)
 				Wcirc = Wmu/(sigma*(Oout - Oin))
 
-			if np.isnan(rc['TEMP_RISE']) == False:
-				Trange = rc['TEMP_RISE']/1.8
-			else:
-				Trange = (rc['NAMEPLATE']*(1-rc['ELEC_EFF_AVG'] - rc['Kos']))/(Wcirc*rc['ELEC_EFF_AVG']*cpw)
+#			if np.isnan(rc['TEMP_RISE']) == False:      #CAUSING PROBLEMS
+#				Trange = rc['TEMP_RISE']/1.8
+#			else:
+			Trange = (rc['NAMEPLATE']*rc['CAP_FRAC']*(1-rc['ELEC_EFF_AVG'] - rc['Kos']))/(28.32*Wcirc*rc['ELEC_EFF_AVG']*cpw)
 
 			Hout = Hin + (sigma*Trange*0.004186)
 #			Tout = (1000*(sigma*cpw*Trange+Hin) - 2500*Oout)/(1.01+1.89*Oout)
@@ -357,22 +361,22 @@ class rbm_post():
 #			if np.isnan(op['Outlet Peak Summer Temperature']) == False:
 #				Tlmax_summer = (5*op['Outlet Peak Summer Temperature']/9) - 32
 #			else:
-			Tlmax_summer = 27
+			Tlmax_summer = max(27, (op['Outlet Peak Summer Temperature'] - 32)/1.8)
 #			if np.isnan(op['Outlet Peak Winter Temperature']) == False:
 #				Tlmax_winter = (5*op['Outlet Peak Winter Temperature']/9) - 32
 
 #			else:
-			Tlmax_winter = 27
+			Tlmax_winter = max(27, (op['Outlet Peak Winter Temperature'] - 32)/1.8) 
 			if np.isnan(op['TEMP_RISE']) == False:
 				cat_df['TEMP_RISE'] = op['TEMP_RISE']/1.8
-			elif (np.isnan(op['Outlet Peak Summer Temperature']) == False) and (np.isnan(op['Inlet Peak Summer Temperature']) == False):
-				cat_df['TEMP_RISE'] =  op['Outlet Peak Summer Temperature'] -  op['Inlet Peak Summer Temperature']
-			elif (np.isnan(op['Outlet Peak Winter Temperature']) == False) and (np.isnan(op['Inlet Peak Winter Temperature']) == False):
-				cat_df['TEMP_RISE'] =  op['Outlet Peak Winter Temperature'] -  op['Inlet Peak Winter Temperature']
+		#	elif (np.isnan(op['Outlet Peak Summer Temperature']) == False) and (np.isnan(op['Inlet Peak Summer Temperature']) == False):
+		#		cat_df['TEMP_RISE'] =  op['Outlet Peak Summer Temperature'] -  op['Inlet Peak Summer Temperature']
+		#	elif (np.isnan(op['Outlet Peak Winter Temperature']) == False) and (np.isnan(op['Inlet Peak Winter Temperature']) == False):
+		#		cat_df['TEMP_RISE'] =  op['Outlet Peak Winter Temperature'] -  op['Inlet Peak Winter Temperature']
 			elif np.isnan(op['INTAKE_RATE_AT_100_PCT']) == False:
 				cat_df['TEMP_RISE'] = (op['NAMEPLATE']*op['CAP_FRAC']*(1-op['ELEC_EFF_AVG'] - op['Kos']))/(28.32*op['INTAKE_RATE_AT_100_PCT']*op['ELEC_EFF_AVG']*cpw)
-			elif np.isnan(op['WATER_FLOW']) == False:
-				cat_df['TEMP_RISE'] = (op['NAMEPLATE']*op['CAP_FRAC']*(1-op['ELEC_EFF_AVG'] - op['Kos']))/(28.32*op['WATER_FLOW']*op['ELEC_EFF_AVG']*cpw)
+#			elif np.isnan(op['WATER_FLOW']) == False:
+#				cat_df['TEMP_RISE'] = (op['NAMEPLATE']*op['CAP_FRAC']*(1-op['ELEC_EFF_AVG'] - op['Kos']))/(28.32*op['WATER_FLOW']*op['ELEC_EFF_AVG']*cpw)
 
 			else:
 				cat_df['TEMP_RISE'] = 11
@@ -413,7 +417,7 @@ class rbm_post():
 		drange_hist = [d1 + td(days=i) for i in range(ddelta_hist.days + 1)]
 		drange_hist = pd.Series(drange_hist, name='date')
 		drange_fut = [d3 + td(days=i) for i in range(ddelta_fut.days + 1)]
-		drange_fut = pd.Series(drange_hist, name='date')
+		drange_fut = pd.Series(drange_fut, name='date')
 
 		ct = {}
 		
@@ -472,7 +476,7 @@ class rbm_post():
 		drange_hist = [d1 + td(days=i) for i in range(ddelta_hist.days + 1)]
 		drange_hist = pd.Series(drange_hist, name='date')
 		drange_fut = [d3 + td(days=i) for i in range(ddelta_fut.days + 1)]
-		drange_fut = pd.Series(drange_hist, name='date')
+		drange_fut = pd.Series(drange_fut, name='date')
 
 		wn = {}
 
@@ -525,9 +529,21 @@ b.import_mohseni('/home/chesterlab/Bartos/pre/mohseni_bayes')
 ###
 
 for s in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:
-#	for g in b.st_op.keys():
-#		b.make_op_outfiles(s, g, '/home/chesterlab/Bartos/post/op')
-	
+	for g in b.st_op.keys():
+		b.make_op_outfiles(s, g, '/home/chesterlab/Bartos/post/op')
+
+for s in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:
+	b.make_rc_outfiles(s, 'lees_f', '/home/chesterlab/Bartos/post/rc/lees_f')
+#	b.make_rc_outfiles(s, 'colstrip', '/home/chesterlab/Bartos/post/rc/colstrip')
+#	b.make_rc_outfiles(s, 'pitt', '/home/chesterlab/Bartos/post/rc/pitt')
+#	b.make_rc_outfiles(s, 'wabuska', '/home/chesterlab/Bartos/post/rc/wabuska')
+#	b.make_rc_outfiles(s, 'brigham', '/home/chesterlab/Bartos/post/rc/brigham')
+#	b.make_rc_outfiles(s, 'guer', '/home/chesterlab/Bartos/post/rc/guer')
+#	b.make_rc_outfiles(s, 'wauna', '/home/chesterlab/Bartos/post/rc/wauna')
+#	b.make_rc_outfiles(s, 'salton', '/home/chesterlab/Bartos/post/rc/salton')
+#	b.make_rc_outfiles(s, 'glenn', '/home/chesterlab/Bartos/post/rc/glenn')
+
+for s in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:
 
 	b.make_rc_outfiles(s, 'little_col', '/home/chesterlab/Bartos/post/rc')
 	b.make_rc_outfiles(s, 'colstrip', '/home/chesterlab/Bartos/post/rc')
@@ -609,7 +625,48 @@ def post_plot(rpath, wpath):
 		plt.savefig('%s/%s.png' % (wpath, pcode), bbox_inches='tight')
 		clf()
 
-def post_plot_wind_ct(rpath, wpath):
+def post_plot_op(rpath, wpath):
+
+	li_1 = list(set([i.split('.')[1] for i in os.listdir(rpath)]))
+	
+	for pcode in li_1:
+		li_2 = [i for i in os.listdir(rpath) if i.endswith(pcode)]
+
+		d = {}
+
+		for j in li_2:
+			f = pd.read_csv('%s' % (rpath + '/' + j), sep='\t')
+			d.update({j : f})
+
+		g = d['hist.%s' % (pcode)].groupby(['MONTH', 'DAY']).mean().reset_index()  
+		hist, = plot(g.index, g['POWER_CAP_MW'], label='historical')
+		g = d['ukmo_a1b.%s' % (pcode)].groupby(['MONTH', 'DAY']).mean().reset_index()
+		ukmo_a1b, = plot(g.index, g['POWER_CAP_MW'], label='ukmo-a1b')
+		g = d['ukmo_a2.%s' % (pcode)].groupby(['MONTH', 'DAY']).mean().reset_index()
+		ukmo_a2, = plot(g.index, g['POWER_CAP_MW'], label='ukmo-a2')
+		g = d['ukmo_b1.%s' % (pcode)].groupby(['MONTH', 'DAY']).mean().reset_index()
+		ukmo_b1, = plot(g.index, g['POWER_CAP_MW'], label='ukmo-b1')
+		g = d['echam_a1b.%s' % (pcode)].groupby(['MONTH', 'DAY']).mean().reset_index()
+		echam_a1b, = plot(g.index, g['POWER_CAP_MW'], label='echam-a1b')
+		g = d['echam_a2.%s' % (pcode)].groupby(['MONTH', 'DAY']).mean().reset_index()
+		echam_a2, = plot(g.index, g['POWER_CAP_MW'], label='echam-a2')
+		g = d['echam_b1.%s' % (pcode)].groupby(['MONTH', 'DAY']).mean().reset_index()
+		echam_b1, = plot(g.index, g['POWER_CAP_MW'], label='echam-b1')
+	
+		legend(loc=4)
+	
+		xlim([1,366])
+		title('Average daily useable capacity at Station %s' % (pcode))
+		xlabel('Day of year')
+		ylabel('Useable capacity (MW)')
+		
+		if not os.path.exists(wpath):
+			os.mkdir(wpath)
+
+		plt.savefig('%s/%s.png' % (wpath, pcode), bbox_inches='tight')
+		clf()
+
+def post_plot_wind_ct_monthly(rpath, wpath):
 
 	li_1 = list(set([i.split('.')[1] for i in os.listdir(rpath)]))
 	
@@ -657,8 +714,292 @@ def post_plot_wind_ct(rpath, wpath):
 		plt.savefig('%s/%s.png' % (wpath, pcode), bbox_inches='tight')
 		clf()
 
+def post_plot_wind_ct_sum(rpath, wpath, tech, typ):
+
+	li_pcode = list(set([i.split('.')[1] for i in os.listdir(rpath)]))
+	li_scen = ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']
+	
+	df_d = {}
+
+	for scen in li_scen:
+		li_2 = [i for i in os.listdir(rpath) if i.split('.')[0] == scen]
+
+		d = {}
+
+		for j in li_2:
+			f = pd.read_csv('%s' % (rpath + '/' + j), sep='\t')
+			if 'date' in f.columns:
+				f = f.dropna(subset=['date'])
+				f = f.set_index('date')
+#				f = f['POWER_CAP_MW']
+			else:
+				mkdate =  lambda x: datetime.date(int(x['YEAR']), int(x['MONTH']), int(x['DAY']))
+				f['date'] = f.apply(mkdate, axis=1) 
+				f = f.set_index('date')
+#				f = f['POWER_CAP_MW']
+
+			d.update({j : f})
+		
+		scen_df = pd.concat([d[i]['POWER_CAP_MW'] for i in d.keys()], axis=1)
+		print scen_df
+#		print scen_df.columns
+#		tc = scen_df.columns
+#		stc = (set(tc))
+#		dupr = sorted([list(tc).index(i) for i in stc])
+#		print dupr
+#		scen_df = scen_df.iloc[:, dupr]
+		df_d.update({scen : scen_df})
+
+#		hist_li = [d[i] for i in d.keys() if 'hist' in i]
+#		ukmo_a1b_li = [d[i] for i in d.keys() if 'ukmo_a1b' in i]
+#		ukmo_a2_li = [d[i] for i in d.keys() if 'ukmo_a2' in i]
+#		ukmo_b1_li = [d[i] for i in d.keys() if 'ukmo_b1' in i]
+#		echam_a1b_li = [d[i] for i in d.keys() if 'echam_a1b' in i]
+#		echam_a2_li = [d[i] for i in d.keys() if 'echam_a2' in i]
+#		echam_b1_li = [d[i] for i in d.keys() if 'echam_b1' in i]
+
+#		hist_df = pd.concat([d[i] for i in d.keys() if 'hist' in i], axis=1)
+#		ukmo_a1b = pd.concat([d[i] for i in d.keys() if 'ukmo_a1b' in i], axis=1) 
+#		ukmo_a2 = pd.concat([d[i] for i in d.keys() if 'ukmo_a2' in i], axis=1)  
+#		ukmo_b1 = pd.concat([d[i] for i in d.keys() if 'ukmo_b1' in i], axis=1)  
+#		echam_a1b = pd.concat([d[i] for i in d.keys() if 'echam_a1b' in i], axis=1)  
+#		echam_a2 = pd.concat([d[i] for i in d.keys() if 'echam_a2' in i], axis=1)   
+#		echam_b1 = pd.concat([d[i] for i in d.keys() if 'echam_b1' in i], axis=1)  
+
+
+	for i in df_d.keys():
+
+		df_d[i]['SUM_CAP'] = df_d[i].sum(axis=1)
+		df_d[i]['date'] = df_d[i].index
+		df_d[i]['date'] = pd.to_datetime(df_d[i]['date'])
+		mkyear = lambda x: x['date'].year
+		mkmonth = lambda x: x['date'].month
+		mkday = lambda x: x['date'].day
+		df_d[i]['YEAR'] = df_d[i].apply(mkyear, axis=1)
+		df_d[i]['MONTH'] = df_d[i].apply(mkmonth, axis=1)
+		df_d[i]['DAY'] = df_d[i].apply(mkday, axis=1)
+		df_d[i] = df_d[i][['YEAR', 'MONTH', 'DAY', 'SUM_CAP']]
+		print df_d[i]
+
+	if typ == 'annual':
+
+		g = df_d['hist'].groupby(['MONTH', 'DAY']).mean().reset_index() 
+		hist, = plot(g.index, g['SUM_CAP'], label='historical')
+		g = df_d['ukmo_a1b'].groupby(['MONTH', 'DAY']).mean().reset_index()
+		ukmo_a1b, = plot(g.index, g['SUM_CAP'], label='ukmo-a1b')
+		g = df_d['ukmo_a2'].groupby(['MONTH', 'DAY']).mean().reset_index()
+		ukmo_a2, = plot(g.index, g['SUM_CAP'], label='ukmo-a2')
+		g = df_d['ukmo_b1'].groupby(['MONTH', 'DAY']).mean().reset_index()
+		ukmo_b1, = plot(g.index, g['SUM_CAP'], label='ukmo-b1')
+		g = df_d['echam_a1b'].groupby(['MONTH', 'DAY']).mean().reset_index()
+		echam_a1b, = plot(g.index, g['SUM_CAP'], label='echam-a1b')
+		g = df_d['echam_a2'].groupby(['MONTH', 'DAY']).mean().reset_index()
+		echam_a2, = plot(g.index, g['SUM_CAP'], label='echam-a2')
+		g = df_d['echam_b1'].groupby(['MONTH', 'DAY']).mean().reset_index()
+		echam_b1, = plot(g.index, g['SUM_CAP'], label='echam-b1')
+
+#		legend(loc=3)
+
+		xlim([1,366])
+		title('Average daily useable %s capacity' % (tech))
+		xlabel('Day of year')
+		ylabel('Useable capacity (MW)')
+
+	if typ == 'century':
+
+		g = df_d['hist'].groupby('YEAR').mean().reset_index() 
+		hist, = plot(g['YEAR'], g['SUM_CAP'], label='historical')
+		g = df_d['ukmo_a1b'].groupby('YEAR').mean().reset_index()
+		ukmo_a1b, = plot(g['YEAR'], g['SUM_CAP'], label='ukmo-a1b')
+		g = df_d['ukmo_a2'].groupby('YEAR').mean().reset_index()
+		ukmo_a2, = plot(g['YEAR'], g['SUM_CAP'], label='ukmo-a2')
+		g = df_d['ukmo_b1'].groupby('YEAR').mean().reset_index()
+		ukmo_b1, = plot(g['YEAR'], g['SUM_CAP'], label='ukmo-b1')
+		g = df_d['echam_a1b'].groupby('YEAR').mean().reset_index()
+		echam_a1b, = plot(g['YEAR'], g['SUM_CAP'], label='echam-a1b')
+		g = df_d['echam_a2'].groupby('YEAR').mean().reset_index()
+		echam_a2, = plot(g['YEAR'], g['SUM_CAP'], label='echam-a2')
+		g = df_d['echam_b1'].groupby('YEAR').mean().reset_index()
+		echam_b1, = plot(g['YEAR'], g['SUM_CAP'], label='echam-b1')
+
+#		legend(loc=3)
+
+		xlim([1950, 2090])
+		axvline(x=2010, linestyle='--', color='black')
+		title('Average daily useable %s capacity' % (tech))
+		xlabel('Year')
+		ylabel('Useable capacity (MW)')
+	
+	if not os.path.exists(wpath):
+		os.mkdir(wpath)
+
+	plt.savefig('%s/%s.png' % (wpath, tech), bbox_inches='tight')
+	clf()
+
+
+def post_plot_hy_sum(rpath, wpath, tech, typ):
+	
+	li_basin = os.listdir(rpath)
+#	li_pcode = list(set([i.split('.')[1] for i in os.listdir(rpath)]))
+	li_scen = ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']
+	
+	df_d = {}
+
+	for scen in li_scen:
+		df_d.update({scen : {}})
+
+	for basin in li_basin:
+
+		rbpath = rpath + '/' + basin
+		b_d = {}
+#		df_d.update({basin : {}})
+
+		for scen in li_scen:
+			li_2 = [i for i in os.listdir(rbpath) if i.split('.')[0] == scen]
+	
+			d = {}
+	
+			for j in li_2:
+				
+				jb = basin + '-' + j 
+
+				f = pd.read_csv('%s' % (rpath + '/' + basin + '/' + j), sep='\t')
+				if 'date' in f.columns:
+					f = f.dropna(subset=['date'])
+					f = f.set_index('date')
+	#				f = f['POWER_CAP_MW']
+				else:
+					mkdate =  lambda x: datetime.date(int(x['YEAR']), int(x['MONTH']), int(x['DAY']))
+					f['date'] = f.apply(mkdate, axis=1) 
+					f = f.set_index('date')
+	#				f = f['POWER_CAP_MW']
+	
+				d.update({jb : f})
+		
+			scen_df = pd.concat([d[i]['POWER_CAP_MW'] for i in d.keys()], axis=1)
+			print scen_df
+			b_d.update({scen : scen_df})
+		
+		for j in b_d.keys():
+			b_d[j]['BASIN_CAP'] = b_d[j].sum(axis=1)
+			df_d[j].update({basin : b_d[j]['BASIN_CAP']})
+
+	for k in df_d.keys():
+		print k
+		print '\n'
+		print df_d[k]
+		df_d[k] = pd.concat(df_d[k].values(), axis=1)
+
+#		print scen_df.columns
+#		tc = scen_df.columns
+#		stc = (set(tc))
+#		dupr = sorted([list(tc).index(i) for i in stc])
+#		print dupr
+#		scen_df = scen_df.iloc[:, dupr]
+
+
+#		hist_li = [d[i] for i in d.keys() if 'hist' in i]
+#		ukmo_a1b_li = [d[i] for i in d.keys() if 'ukmo_a1b' in i]
+#		ukmo_a2_li = [d[i] for i in d.keys() if 'ukmo_a2' in i]
+#		ukmo_b1_li = [d[i] for i in d.keys() if 'ukmo_b1' in i]
+#		echam_a1b_li = [d[i] for i in d.keys() if 'echam_a1b' in i]
+#		echam_a2_li = [d[i] for i in d.keys() if 'echam_a2' in i]
+#		echam_b1_li = [d[i] for i in d.keys() if 'echam_b1' in i]
+
+#		hist_df = pd.concat([d[i] for i in d.keys() if 'hist' in i], axis=1)
+#		ukmo_a1b = pd.concat([d[i] for i in d.keys() if 'ukmo_a1b' in i], axis=1) 
+#		ukmo_a2 = pd.concat([d[i] for i in d.keys() if 'ukmo_a2' in i], axis=1)  
+#		ukmo_b1 = pd.concat([d[i] for i in d.keys() if 'ukmo_b1' in i], axis=1)  
+#		echam_a1b = pd.concat([d[i] for i in d.keys() if 'echam_a1b' in i], axis=1)  
+#		echam_a2 = pd.concat([d[i] for i in d.keys() if 'echam_a2' in i], axis=1)   
+#		echam_b1 = pd.concat([d[i] for i in d.keys() if 'echam_b1' in i], axis=1)  
+
+
+	for i in df_d.keys():
+
+		df_d[i]['SUM_CAP'] = df_d[i].sum(axis=1)
+		df_d[i]['date'] = df_d[i].index
+		df_d[i]['date'] = pd.to_datetime(df_d[i]['date'])
+		mkyear = lambda x: x['date'].year
+		mkmonth = lambda x: x['date'].month
+		mkday = lambda x: x['date'].day
+		df_d[i]['YEAR'] = df_d[i].apply(mkyear, axis=1)
+		df_d[i]['MONTH'] = df_d[i].apply(mkmonth, axis=1)
+		df_d[i]['DAY'] = df_d[i].apply(mkday, axis=1)
+		df_d[i] = df_d[i][['YEAR', 'MONTH', 'DAY', 'SUM_CAP']]
+		print df_d[i]
+
+	if typ == 'annual':
+
+		g = df_d['hist'].groupby(['MONTH', 'DAY']).mean().reset_index() 
+		hist, = plot(g.index, g['SUM_CAP'], label='historical')
+		g = df_d['ukmo_a1b'].groupby(['MONTH', 'DAY']).mean().reset_index()
+		ukmo_a1b, = plot(g.index, g['SUM_CAP'], label='ukmo-a1b')
+		g = df_d['ukmo_a2'].groupby(['MONTH', 'DAY']).mean().reset_index()
+		ukmo_a2, = plot(g.index, g['SUM_CAP'], label='ukmo-a2')
+		g = df_d['ukmo_b1'].groupby(['MONTH', 'DAY']).mean().reset_index()
+		ukmo_b1, = plot(g.index, g['SUM_CAP'], label='ukmo-b1')
+		g = df_d['echam_a1b'].groupby(['MONTH', 'DAY']).mean().reset_index()
+		echam_a1b, = plot(g.index, g['SUM_CAP'], label='echam-a1b')
+		g = df_d['echam_a2'].groupby(['MONTH', 'DAY']).mean().reset_index()
+		echam_a2, = plot(g.index, g['SUM_CAP'], label='echam-a2')
+		g = df_d['echam_b1'].groupby(['MONTH', 'DAY']).mean().reset_index()
+		echam_b1, = plot(g.index, g['SUM_CAP'], label='echam-b1')
+
+#		legend(loc=3)
+
+		xlim([1,366])
+		title('Average daily useable %s capacity' % (tech))
+		xlabel('Day of year')
+		ylabel('Useable capacity (MW)')
+
+	if typ == 'century':
+
+		g = df_d['hist'].groupby('YEAR').mean().reset_index() 
+		hist, = plot(g['YEAR'], g['SUM_CAP'], label='historical')
+		g = df_d['ukmo_a1b'].groupby('YEAR').mean().reset_index()
+		ukmo_a1b, = plot(g['YEAR'], g['SUM_CAP'], label='ukmo-a1b')
+		g = df_d['ukmo_a2'].groupby('YEAR').mean().reset_index()
+		ukmo_a2, = plot(g['YEAR'], g['SUM_CAP'], label='ukmo-a2')
+		g = df_d['ukmo_b1'].groupby('YEAR').mean().reset_index()
+		ukmo_b1, = plot(g['YEAR'], g['SUM_CAP'], label='ukmo-b1')
+		g = df_d['echam_a1b'].groupby('YEAR').mean().reset_index()
+		echam_a1b, = plot(g['YEAR'], g['SUM_CAP'], label='echam-a1b')
+		g = df_d['echam_a2'].groupby('YEAR').mean().reset_index()
+		echam_a2, = plot(g['YEAR'], g['SUM_CAP'], label='echam-a2')
+		g = df_d['echam_b1'].groupby('YEAR').mean().reset_index()
+		echam_b1, = plot(g['YEAR'], g['SUM_CAP'], label='echam-b1')
+
+#		legend(loc=3)
+
+		xlim([1950, 2090])
+		axvline(x=2010, linestyle='--', color='black')
+		title('Average daily useable %s capacity' % (tech))
+		xlabel('Year')
+		ylabel('Useable capacity (MW)')
+	
+	if not os.path.exists(wpath):
+		os.mkdir(wpath)
+
+	plt.savefig('%s/%s.png' % (wpath, tech), bbox_inches='tight')
+	clf()
+
+post_plot_op('/home/chesterlab/Bartos/post/op', '/home/chesterlab/Bartos/post/img/op')
+
+post_plot_wind_ct_sum('/home/chesterlab/Bartos/post/ct', '/home/chesterlab/Bartos/post/img/sum', 'CT_yearly', 'century')
+post_plot_wind_ct_sum('/home/chesterlab/Bartos/post/ct', '/home/chesterlab/Bartos/post/img/sum', 'CT_annual', 'annual')
+post_plot_wind_ct_sum('/home/chesterlab/Bartos/post/wn', '/home/chesterlab/Bartos/post/img/sum', 'WT_yearly', 'century')
+post_plot_wind_ct_sum('/home/chesterlab/Bartos/post/wn', '/home/chesterlab/Bartos/post/img/sum', 'WT_annual', 'annual')
+post_plot_wind_ct_sum('/home/chesterlab/Bartos/post/pv', '/home/chesterlab/Bartos/post/img/sum', 'PV_yearly', 'century')
+post_plot_wind_ct_sum('/home/chesterlab/Bartos/post/pv', '/home/chesterlab/Bartos/post/img/sum', 'PV_annual', 'annual')
+post_plot_hy_sum('/home/chesterlab/Bartos/post/hy', '/home/chesterlab/Bartos/post/img/sum', 'HY_annual', 'annual')
+post_plot_hy_sum('/home/chesterlab/Bartos/post/hy', '/home/chesterlab/Bartos/post/img/sum', 'HY_yearly', 'century')
+
+
 #post_plot('/home/chesterlab/Bartos/post/rc/lees_f', '/home/chesterlab/Bartos/post/img/rc/lees_f')
 #post_plot('/home/chesterlab/Bartos/post/rc/colstrip', '/home/chesterlab/Bartos/post/img/rc/colstrip')
+post_plot('/home/chesterlab/Bartos/post/rc/wauna', '/home/chesterlab/Bartos/post/img/rc/wauna')
+post_plot('/home/chesterlab/Bartos/post/rc/salton', '/home/chesterlab/Bartos/post/img/rc/salton')
 post_plot('/home/chesterlab/Bartos/post/rc/pitt', '/home/chesterlab/Bartos/post/img/rc/pitt')
 
 post_plot('/home/chesterlab/Bartos/post/rc/pitt', '/home/chesterlab/Bartos/post/img/rc/pitt')

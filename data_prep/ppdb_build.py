@@ -123,13 +123,40 @@ post_pp_d.update({'ct' : CT_WECC})
 #####################################################
 
 ####GET STEAM TURBINES###############################
+
+
+
 STix = b.d['eGRID_2009_gen']['ORISPL'].ix[b.d['eGRID_2009_gen']['PRMVR'].isin(['ST', 'CA', 'BT'])].drop_duplicates()
 STpl_ix = b.d['eGRID_2009_plant'].drop_duplicates(subset=['ORISPL']).set_index('ORISPL').loc[STix]
 ST_WECC_ll = STpl_ix.loc[STpl_ix['NERC'] == 'WECC']
+
 Cool = b.d['EnviroEquipY09_Cool'].set_index('PLANT_CODE', drop=False).loc[pd.Series(ST_WECC_ll.index)].dropna(subset=['COOLING_ID']).drop_duplicates(subset=['PLANT_CODE'])
-Cool[['COOLING_TYPE1', 'COOLING_TYPE2', 'COOLING_TYPE3', 'COOLING_TYPE4']]
+
+Cool_all = b.d['EnviroEquipY09_Cool'].set_index('PLANT_CODE', drop=False).loc[pd.Series(ST_WECC_ll.index)].dropna(subset=['COOLING_ID'])  
+Cool_all['PLANT_CODE'] = [int(i) for i in Cool_all['PLANT_CODE']]
+Cool_all['COOL_CAT_ID'] = Cool_all['PLANT_CODE'].map(str) + '_' + Cool_all['COOLING_ID'] 
+#Cool = Cool.set_index('COOLING_ID')
+
+Gen = b.d['GeneratorY09_Exist']
+#Gen['PLANT_CODE'] = [float(i) for i in Gen['PLANT_CODE']]
+Gen = Gen.set_index('PLANT_CODE', drop=False).loc[pd.Series(ST_WECC_ll.index)].dropna(subset=['NAMEPLATE']) 
+
 CoolOps = b.d['SCHEDULE 3A 5A 8A 8B 8C 8D 8E 8F REVISED 2009 04112011_Cooling Operations'].set_index('Plant ID', drop=False).loc[pd.Series(ST_WECC_ll.index)].dropna(subset=['Year']).drop_duplicates(subset=['Plant ID'])
 EW3 = b.d['EW3_main_data'].drop_duplicates(subset=['Plant Code']).set_index('Plant Code')[['Water Resource Region', 'Reported Water Source (Type)']]
+
+
+Assoc_B_G = b.d['EnviroAssocY09_Boiler_Gen']
+Assoc_B_G['CAT_ID'] = Assoc_B_G['PLANT_CODE'].map(str) + '_' + Assoc_B_G['BOILER_ID']
+Assoc_B_G = Assoc_B_G.set_index('CAT_ID')
+Assoc_B_C = b.d['EnviroAssocY09_Boiler_Cool']
+Assoc_B_C['CAT_ID'] = Assoc_B_C['PLANT_CODE'].map(str) + '_' + Assoc_B_C['BOILER_ID']
+Assoc_B_C = Assoc_B_C.set_index('CAT_ID')
+Assoc = Assoc_B_G.merge(Assoc_B_C, how='outer')
+Assoc['PLANT_CODE'] = [int(i) for i in Assoc['PLANT_CODE']]
+Assoc['GEN_CAT_ID'] = Assoc['PLANT_CODE'].map(str) + '_' + Assoc['GENERATOR_ID'] 
+
+#Assoc = pd.concat([Assoc_B_G, Assoc_B_C], axis=1)
+
 
 ST_WECC = pd.concat([ST_WECC_ll, Cool, CoolOps, EW3], axis=1)
 ST_WECC['WR_REG'] = ST_WECC['Water Resource Region'].map(wrrdict)
@@ -260,16 +287,32 @@ ST_WECC_OP = pd.concat([ST_WECC_OP, st_op_fuel_monthly, st_op_capacities], axis=
 
 st_rc_tot_gen = b.d['GeneratorY09_Exist'].set_index('PLANT_CODE', drop=False).loc[st_wecc_rc_stix].groupby('PLANT_CODE').sum()
 st_rc_st_rc_gen = b.d['GeneratorY09_Exist'].set_index('PLANT_CODE', drop=False).loc[st_wecc_rc_stix]
+#st_rc_st_rc_gen['GEN_CAT_ID'] = st_rc_st_rc_gen['PLANT_CODE'].map(str) + '_' + st_rc_st_rc_gen['GENERATOR_ID']
+
+#st_rc_st_rc_gen = st_rc_st_rc_gen.merge(Assoc, how='left', on='GEN_CAT_ID') ###################
+#st_rc_st_rc_gen['COOL_CAT_ID'] = st_rc_st_rc_gen['PLANT_CODE_x'].map(str) + '_' + st_rc_st_rc_gen['COOLING_ID']  
+#st_rc_st_rc_gen = st_rc_st_rc_gen.merge(Cool_all, how='left', on='COOL_CAT_ID')
+
 st_rc_st_rc_gen = st_rc_st_rc_gen.loc[st_rc_st_rc_gen['PRIME_MOVER'].isin(['ST', 'CA', 'BT'])].groupby('PLANT_CODE').sum()
+#st_rc_st_rc_gen = st_rc_st_rc_gen.loc[st_rc_st_rc_gen['PRIME_MOVER'].isin(['ST', 'CA', 'BT'])].loc[st_rc_st_rc_gen['COOLING_TYPE1'].isin(['HRC', 'HRF', 'HRI', 'RC', 'RF', 'RI', 'RN', 'RU'])].groupby('PLANT_CODE').sum()
 
 ST_WECC_RC['CAP_FRAC'] = st_rc_st_rc_gen['NAMEPLATE']/st_rc_tot_gen['NAMEPLATE']
 
 
 st_op_tot_gen = b.d['GeneratorY09_Exist'].set_index('PLANT_CODE', drop=False).loc[st_wecc_op_stix].groupby('PLANT_CODE').sum()
 st_op_st_op_gen = b.d['GeneratorY09_Exist'].set_index('PLANT_CODE', drop=False).loc[st_wecc_op_stix]
-st_op_st_op_gen = st_op_st_op_gen.loc[st_op_st_op_gen['PRIME_MOVER'].isin(['ST', 'CA', 'BT'])].groupby('PLANT_CODE').sum()
+st_op_st_op_gen['GEN_CAT_ID'] = st_op_st_op_gen['PLANT_CODE'].map(str) + '_' + st_op_st_op_gen['GENERATOR_ID']
+
+st_op_st_op_gen = st_op_st_op_gen.merge(Assoc, how='left', on='GEN_CAT_ID') ###################
+st_op_st_op_gen['COOL_CAT_ID'] = st_op_st_op_gen['PLANT_CODE_x'].map(str) + '_' + st_op_st_op_gen['COOLING_ID']  
+st_op_st_op_gen = st_op_st_op_gen.merge(Cool_all, how='left', on='COOL_CAT_ID').drop_duplicates(subset=['COOL_CAT_ID'])
+
+st_op_st_op_gen = st_op_st_op_gen.loc[st_op_st_op_gen['PRIME_MOVER'].isin(['ST', 'CA', 'BT'])].loc[st_op_st_op_gen['COOLING_TYPE1'].isin(['OC', 'OF', 'OS'])].groupby('PLANT_CODE').sum()
 
 ST_WECC_OP['CAP_FRAC'] = st_op_st_op_gen['NAMEPLATE']/st_op_tot_gen['NAMEPLATE']
+ST_WECC_OP['INTAKE_RATE_AT_100_PCT'] = st_op_st_op_gen['INTAKE_RATE_AT_100_PCT']
+ST_WECC_OP['CAP_FRAC'] = ST_WECC_OP['CAP_FRAC'].fillna(1.0)
+
 
 ## ADD 767 DATA
 
@@ -288,7 +331,7 @@ del rc_water[0]
 del rc_water[1]
 
 ST_WECC_RC = pd.concat([ST_WECC_RC, rc_water], axis=1)
-ST_WECC_RC = ST_WECC_RC[['PNAME', 'LAT', 'LON', 'CAPFAC', 'NAMEPCAP', 'NAMEPLATE', 'PLPRMFL', 'WR_REG', 'W_SRC', 'PCODE', 'CAP_FRAC', 'Intake Peak Winter Temperature', 'Outlet Peak Winter Temperature', 'Intake Peak Summer Temperature', 'Outlet Peak Summer Temperature', 'INTAKE_RATE_AT_100_PCT', 'TOWER_WATER_RATE_PCT', 'WATER_FLOW', 'TEMP_RISE', 'ELEC_EFF_JAN', 'ELEC_EFF_FEB', 'ELEC_EFF_MAR', 'ELEC_EFF_APR', 'ELEC_EFF_MAY', 'ELEC_EFF_JUN', 'ELEC_EFF_JUL', 'ELEC_EFF_AUG', 'ELEC_EFF_SEP', 'ELEC_EFF_OCT', 'ELEC_EFF_NOV', 'ELEC_EFF_DEC', 'ELEC_EFF_AVG']]
+ST_WECC_RC = ST_WECC_RC[['PNAME', 'LAT', 'LON', 'CAPFAC', 'NAMEPCAP', 'NAMEPLATE', 'PLPRMFL', 'WR_REG', 'W_SRC', 'PCODE', 'CAP_FRAC', 'SUMMER_CAPABILITY', 'WINTER_CAPABILITY', 'Intake Peak Winter Temperature', 'Outlet Peak Winter Temperature', 'Intake Peak Summer Temperature', 'Outlet Peak Summer Temperature', 'INTAKE_RATE_AT_100_PCT', 'TOWER_WATER_RATE_PCT', 'WATER_FLOW', 'TEMP_RISE', 'ELEC_EFF_JAN', 'ELEC_EFF_FEB', 'ELEC_EFF_MAR', 'ELEC_EFF_APR', 'ELEC_EFF_MAY', 'ELEC_EFF_JUN', 'ELEC_EFF_JUL', 'ELEC_EFF_AUG', 'ELEC_EFF_SEP', 'ELEC_EFF_OCT', 'ELEC_EFF_NOV', 'ELEC_EFF_DEC', 'ELEC_EFF_AVG']]
 ST_WECC_RC.fillna(np.nan, inplace=True)
 
 kos_map = lambda x: 0.12 if x['PLPRMFL'] in ['ANT', 'BIT', 'LIG', 'SUB', 'SC', 'RC', 'WC'] else 0 if x['PLPRMFL'] in ['NUC', 'GEO'] else 0.2
@@ -309,7 +352,7 @@ del op_water[0]
 del op_water[1]
 
 ST_WECC_OP = pd.concat([ST_WECC_OP, op_water], axis=1)
-ST_WECC_OP = ST_WECC_OP[['PNAME', 'LAT', 'LON', 'CAPFAC', 'NAMEPCAP', 'NAMEPLATE', 'PLPRMFL', 'WR_REG', 'W_SRC', 'PCODE', 'CAP_FRAC', 'Intake Peak Winter Temperature', 'Outlet Peak Winter Temperature', 'Intake Peak Summer Temperature', 'Outlet Peak Summer Temperature', 'INTAKE_RATE_AT_100_PCT', 'TOWER_WATER_RATE_PCT', 'WATER_FLOW', 'TEMP_RISE', 'ELEC_EFF_JAN', 'ELEC_EFF_FEB', 'ELEC_EFF_MAR', 'ELEC_EFF_APR', 'ELEC_EFF_MAY', 'ELEC_EFF_JUN', 'ELEC_EFF_JUL', 'ELEC_EFF_AUG', 'ELEC_EFF_SEP', 'ELEC_EFF_OCT', 'ELEC_EFF_NOV', 'ELEC_EFF_DEC', 'ELEC_EFF_AVG']]
+ST_WECC_OP = ST_WECC_OP[['PNAME', 'LAT', 'LON', 'CAPFAC', 'NAMEPCAP', 'NAMEPLATE', 'PLPRMFL', 'WR_REG', 'W_SRC', 'PCODE', 'CAP_FRAC', 'SUMMER_CAPABILITY', 'WINTER_CAPABILITY','Intake Peak Winter Temperature', 'Outlet Peak Winter Temperature', 'Intake Peak Summer Temperature', 'Outlet Peak Summer Temperature', 'INTAKE_RATE_AT_100_PCT', 'TOWER_WATER_RATE_PCT', 'WATER_FLOW', 'TEMP_RISE', 'ELEC_EFF_JAN', 'ELEC_EFF_FEB', 'ELEC_EFF_MAR', 'ELEC_EFF_APR', 'ELEC_EFF_MAY', 'ELEC_EFF_JUN', 'ELEC_EFF_JUL', 'ELEC_EFF_AUG', 'ELEC_EFF_SEP', 'ELEC_EFF_OCT', 'ELEC_EFF_NOV', 'ELEC_EFF_DEC', 'ELEC_EFF_AVG']]
 ST_WECC_OP.fillna(np.nan, inplace=True)
 
 ST_WECC_OP['Kos'] = ST_WECC_OP.apply(kos_map, axis=1)
