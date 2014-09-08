@@ -287,6 +287,7 @@ class rbm_post():
 	#		cat_df['O_in'] = Oin
 
 			cat_df['POWER_CAP_MW'] = (1000*0.028317*cat_df['Wcirc_Constr'])*(Hout + Tc*cpw*tau*(Oout - Oin) - cat_df['WTEMP']*cpw*(Oout - Oin) - Hin)/(sigma*(1-rc['ELEC_EFF_AVG'] - rc['Kos'])/rc['ELEC_EFF_AVG'])
+			cat_df.loc[cat_df['POWER_CAP_MW'] > rc['NAMEPLATE']*rc['CAP_FRAC'], 'POWER_CAP_MW'] = rc['NAMEPLATE']*rc['CAP_FRAC']
 			
 			self.ext_cat_df = cat_df
 
@@ -514,13 +515,15 @@ class rbm_post():
 
 ####### WITH SYMLINK FIX
 
-b = rbm_post('/home/chesterlab/Bartos/VIC/input/dict/opstn.p', '/home/chesterlab/Bartos/VIC/input/dict/rcstn.p', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/rbm/run', '/home/chesterlab/Bartos/VIC/output/st_rc', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/rout/rc/d8', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/rout/op/d8', '/home/chesterlab/Bartos/VIC/input/dict/post_pp_d.p', '/home/chesterlab/Bartos/VIC/input/dict/tech_d.p')
+b = rbm_post('/home/chesterlab/Bartos/VIC/input/dict/opstn.p', '/home/chesterlab/Bartos/VIC/input/dict/rcstn.p', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/rbm/run', '/home/chesterlab/Bartos/VIC/output/st_rc', '/home/chesterlab/Bartos/VIC/output/rout/rc/d8', '/media/melchior/BALTHASAR/nsf_hydro/VIC/output/rout/op/d8', '/home/chesterlab/Bartos/VIC/input/dict/post_pp_d.p', '/home/chesterlab/Bartos/VIC/input/dict/tech_d.p')
 
 b.make_spat_d()
 
 b.fix_stnames(b.st_rc)
 
 b.fix_stnames(b.st_op)
+
+b.st_d['st_rc']['comanche'].loc[2] = ['Comanche', 470.0, (38.2664, -104.5747), 'Coman']
 
 b.make_diff()
 
@@ -533,6 +536,16 @@ for s in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'ec
 		b.make_op_outfiles(s, g, '/home/chesterlab/Bartos/post/op')
 
 for s in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:
+
+#	b.make_rc_outfiles(s, 'comanche', '/home/chesterlab/Bartos/post/rc/comanche')
+#	b.make_rc_outfiles(s, 'parker', '/home/chesterlab/Bartos/post/rc/parker')
+#	b.make_rc_outfiles(s, 'pitt', '/home/chesterlab/Bartos/post/rc/pitt')
+#	b.make_rc_outfiles(s, 'paper', '/home/chesterlab/Bartos/post/rc/paper')
+#	b.make_rc_outfiles(s, 'glenn', '/home/chesterlab/Bartos/post/rc/glenn')
+#	b.make_rc_outfiles(s, 'hoover', '/home/chesterlab/Bartos/post/rc/hoover')
+#	b.make_rc_outfiles(s, 'little_col', '/home/chesterlab/Bartos/post/rc/little_col')
+#	b.make_rc_outfiles(s, 'pawnee', '/home/chesterlab/Bartos/post/rc/pawnee')
+#	b.make_rc_outfiles(s, 'intermtn', '/home/chesterlab/Bartos/post/rc/intermtn')
 	b.make_rc_outfiles(s, 'lees_f', '/home/chesterlab/Bartos/post/rc/lees_f')
 #	b.make_rc_outfiles(s, 'colstrip', '/home/chesterlab/Bartos/post/rc/colstrip')
 #	b.make_rc_outfiles(s, 'pitt', '/home/chesterlab/Bartos/post/rc/pitt')
@@ -543,30 +556,12 @@ for s in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'ec
 #	b.make_rc_outfiles(s, 'salton', '/home/chesterlab/Bartos/post/rc/salton')
 #	b.make_rc_outfiles(s, 'glenn', '/home/chesterlab/Bartos/post/rc/glenn')
 
-for s in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:
+#for s in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:	
+#	for g in b.st_rc.keys():
+#		print g
+#		b.make_rc_outfiles(s, g, '/home/chesterlab/Bartos/post/rc')
 
-	b.make_rc_outfiles(s, 'little_col', '/home/chesterlab/Bartos/post/rc')
-	b.make_rc_outfiles(s, 'colstrip', '/home/chesterlab/Bartos/post/rc')
-	b.make_rc_outfiles(s, 'comanche', '/home/chesterlab/Bartos/post/rc')
-	b.make_rc_outfiles(s, 'parker', '/home/chesterlab/Bartos/post/rc')
-	b.make_rc_outfiles(s, 'hoover', '/home/chesterlab/Bartos/post/rc')
-	b.make_rc_outfiles(s, 'wauna', '/home/chesterlab/Bartos/post/rc')
-	b.make_rc_outfiles(s, 'wabuska', '/home/chesterlab/Bartos/post/rc')
-	b.make_rc_outfiles(s, 'paper', '/home/chesterlab/Bartos/post/rc')
-	b.make_rc_outfiles(s, 'guer', '/home/chesterlab/Bartos/post/rc')
-	b.make_rc_outfiles(s, 'glenn', '/home/chesterlab/Bartos/post/rc')
-	b.make_rc_outfiles(s, 'brigham', '/home/chesterlab/Bartos/post/rc')
-	b.make_rc_outfiles(s, 'intermtn', '/home/chesterlab/Bartos/post/rc') #### FLOW ACCUMULATION PROBLEM
-	b.make_rc_outfiles(s, 'pawnee', '/home/chesterlab/Bartos/post/rc')
-	b.make_rc_outfiles(s, 'salton', '/home/chesterlab/Bartos/post/rc')
-	b.make_rc_outfiles(s, 'pitt', '/home/chesterlab/Bartos/post/rc')
-	b.make_rc_outfiles(s, 'lees_f', '/home/chesterlab/Bartos/post/rc')
-	
-	for g in b.st_rc.keys():
-		print g
-		b.make_rc_outfiles(s, g, '/home/chesterlab/Bartos/post/rc')
-
-b.make_op_outfiles('hist', 'pitt', '/home/chesterlab/Bartos/post/op')
+#b.make_op_outfiles('hist', 'pitt', '/home/chesterlab/Bartos/post/op')
 
 ###
 
@@ -984,6 +979,159 @@ def post_plot_hy_sum(rpath, wpath, tech, typ):
 	plt.savefig('%s/%s.png' % (wpath, tech), bbox_inches='tight')
 	clf()
 
+
+def post_plot_rc_sum(rpath, wpath, tech, typ):
+	
+	li_basin = os.listdir(rpath)
+#	li_pcode = list(set([i.split('.')[1] for i in os.listdir(rpath)]))
+	li_scen = ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']
+	
+	df_d = {}
+
+	for scen in li_scen:
+		df_d.update({scen : {}})
+
+	for basin in li_basin:
+
+		rbpath = rpath + '/' + basin
+		b_d = {}
+#		df_d.update({basin : {}})
+
+		for scen in li_scen:
+			li_2 = [i for i in os.listdir(rbpath) if i.split('.')[0] == scen]
+	
+			d = {}
+	
+			for j in li_2:
+				
+				jb = basin + '-' + j 
+
+				f = pd.read_csv('%s' % (rpath + '/' + basin + '/' + j), sep='\t')
+				if 'date' in f.columns:
+					f = f.dropna(subset=['date'])
+					f = f.set_index('date')
+	#				f = f['POWER_CAP_MW']
+				elif 'YEAR.1' in f.columns:
+					mkdate =  lambda x: datetime.date(int(x['YEAR.1']), int(x['MONTH']), int(x['DAY.1']))
+					f['date'] = f.apply(mkdate, axis=1) 
+					f = f.set_index('date')
+	#				f = f['POWER_CAP_MW']
+				else:
+					mkdate =  lambda x: datetime.date(int(x['YEAR']), int(x['MONTH']), int(x['DAY']))
+					f['date'] = f.apply(mkdate, axis=1) 
+					f = f.set_index('date')	
+				d.update({jb : f})
+		
+			scen_df = pd.concat([d[i]['POWER_CAP_MW'] for i in d.keys()], axis=1)
+			print scen_df
+			b_d.update({scen : scen_df})
+		
+		for j in b_d.keys():
+			b_d[j]['BASIN_CAP'] = b_d[j].sum(axis=1)
+			df_d[j].update({basin : b_d[j]['BASIN_CAP']})
+
+	for k in df_d.keys():
+		print k
+		print '\n'
+		print df_d[k]
+		df_d[k] = pd.concat(df_d[k].values(), axis=1)
+
+#		print scen_df.columns
+#		tc = scen_df.columns
+#		stc = (set(tc))
+#		dupr = sorted([list(tc).index(i) for i in stc])
+#		print dupr
+#		scen_df = scen_df.iloc[:, dupr]
+
+
+#		hist_li = [d[i] for i in d.keys() if 'hist' in i]
+#		ukmo_a1b_li = [d[i] for i in d.keys() if 'ukmo_a1b' in i]
+#		ukmo_a2_li = [d[i] for i in d.keys() if 'ukmo_a2' in i]
+#		ukmo_b1_li = [d[i] for i in d.keys() if 'ukmo_b1' in i]
+#		echam_a1b_li = [d[i] for i in d.keys() if 'echam_a1b' in i]
+#		echam_a2_li = [d[i] for i in d.keys() if 'echam_a2' in i]
+#		echam_b1_li = [d[i] for i in d.keys() if 'echam_b1' in i]
+
+#		hist_df = pd.concat([d[i] for i in d.keys() if 'hist' in i], axis=1)
+#		ukmo_a1b = pd.concat([d[i] for i in d.keys() if 'ukmo_a1b' in i], axis=1) 
+#		ukmo_a2 = pd.concat([d[i] for i in d.keys() if 'ukmo_a2' in i], axis=1)  
+#		ukmo_b1 = pd.concat([d[i] for i in d.keys() if 'ukmo_b1' in i], axis=1)  
+#		echam_a1b = pd.concat([d[i] for i in d.keys() if 'echam_a1b' in i], axis=1)  
+#		echam_a2 = pd.concat([d[i] for i in d.keys() if 'echam_a2' in i], axis=1)   
+#		echam_b1 = pd.concat([d[i] for i in d.keys() if 'echam_b1' in i], axis=1)  
+
+
+	for i in df_d.keys():
+
+		df_d[i]['SUM_CAP'] = df_d[i].sum(axis=1)
+		df_d[i]['date'] = df_d[i].index
+		df_d[i]['date'] = pd.to_datetime(df_d[i]['date'])
+		mkyear = lambda x: x['date'].year
+		mkmonth = lambda x: x['date'].month
+		mkday = lambda x: x['date'].day
+		df_d[i]['YEAR'] = df_d[i].apply(mkyear, axis=1)
+		df_d[i]['MONTH'] = df_d[i].apply(mkmonth, axis=1)
+		df_d[i]['DAY'] = df_d[i].apply(mkday, axis=1)
+		df_d[i] = df_d[i][['YEAR', 'MONTH', 'DAY', 'SUM_CAP']]
+		print df_d[i]
+
+	if typ == 'annual':
+
+		g = df_d['hist'].groupby(['MONTH', 'DAY']).mean().reset_index() 
+		hist, = plot(g.index, g['SUM_CAP'], label='historical')
+		g = df_d['ukmo_a1b'].groupby(['MONTH', 'DAY']).mean().reset_index()
+		ukmo_a1b, = plot(g.index, g['SUM_CAP'], label='ukmo-a1b')
+		g = df_d['ukmo_a2'].groupby(['MONTH', 'DAY']).mean().reset_index()
+		ukmo_a2, = plot(g.index, g['SUM_CAP'], label='ukmo-a2')
+		g = df_d['ukmo_b1'].groupby(['MONTH', 'DAY']).mean().reset_index()
+		ukmo_b1, = plot(g.index, g['SUM_CAP'], label='ukmo-b1')
+		g = df_d['echam_a1b'].groupby(['MONTH', 'DAY']).mean().reset_index()
+		echam_a1b, = plot(g.index, g['SUM_CAP'], label='echam-a1b')
+		g = df_d['echam_a2'].groupby(['MONTH', 'DAY']).mean().reset_index()
+		echam_a2, = plot(g.index, g['SUM_CAP'], label='echam-a2')
+		g = df_d['echam_b1'].groupby(['MONTH', 'DAY']).mean().reset_index()
+		echam_b1, = plot(g.index, g['SUM_CAP'], label='echam-b1')
+
+#		legend(loc=3)
+
+		xlim([1,366])
+		title('Average daily useable %s capacity' % (tech))
+		xlabel('Day of year')
+		ylabel('Useable capacity (MW)')
+
+	if typ == 'century':
+
+		g = df_d['hist'].groupby('YEAR').mean().reset_index() 
+		hist, = plot(g['YEAR'], g['SUM_CAP'], label='historical')
+		g = df_d['ukmo_a1b'].groupby('YEAR').mean().reset_index()
+		ukmo_a1b, = plot(g['YEAR'], g['SUM_CAP'], label='ukmo-a1b')
+		g = df_d['ukmo_a2'].groupby('YEAR').mean().reset_index()
+		ukmo_a2, = plot(g['YEAR'], g['SUM_CAP'], label='ukmo-a2')
+		g = df_d['ukmo_b1'].groupby('YEAR').mean().reset_index()
+		ukmo_b1, = plot(g['YEAR'], g['SUM_CAP'], label='ukmo-b1')
+		g = df_d['echam_a1b'].groupby('YEAR').mean().reset_index()
+		echam_a1b, = plot(g['YEAR'], g['SUM_CAP'], label='echam-a1b')
+		g = df_d['echam_a2'].groupby('YEAR').mean().reset_index()
+		echam_a2, = plot(g['YEAR'], g['SUM_CAP'], label='echam-a2')
+		g = df_d['echam_b1'].groupby('YEAR').mean().reset_index()
+		echam_b1, = plot(g['YEAR'], g['SUM_CAP'], label='echam-b1')
+
+#		legend(loc=3)
+
+		xlim([1950, 2090])
+		axvline(x=2010, linestyle='--', color='black')
+		title('Average daily useable %s capacity' % (tech))
+		xlabel('Year')
+		ylabel('Useable capacity (MW)')
+	
+	if not os.path.exists(wpath):
+		os.mkdir(wpath)
+
+	plt.savefig('%s/%s.png' % (wpath, tech), bbox_inches='tight')
+	clf()
+
+
+
 post_plot_op('/home/chesterlab/Bartos/post/op', '/home/chesterlab/Bartos/post/img/op')
 
 post_plot_wind_ct_sum('/home/chesterlab/Bartos/post/ct', '/home/chesterlab/Bartos/post/img/sum', 'CT_yearly', 'century')
@@ -994,6 +1142,8 @@ post_plot_wind_ct_sum('/home/chesterlab/Bartos/post/pv', '/home/chesterlab/Barto
 post_plot_wind_ct_sum('/home/chesterlab/Bartos/post/pv', '/home/chesterlab/Bartos/post/img/sum', 'PV_annual', 'annual')
 post_plot_hy_sum('/home/chesterlab/Bartos/post/hy', '/home/chesterlab/Bartos/post/img/sum', 'HY_annual', 'annual')
 post_plot_hy_sum('/home/chesterlab/Bartos/post/hy', '/home/chesterlab/Bartos/post/img/sum', 'HY_yearly', 'century')
+post_plot_hy_sum('/home/chesterlab/Bartos/post/rc', '/home/chesterlab/Bartos/post/img/sum', 'RC_annual', 'annual')
+post_plot_hy_sum('/home/chesterlab/Bartos/post/rc', '/home/chesterlab/Bartos/post/img/sum', 'RC_yearly', 'century')
 
 
 #post_plot('/home/chesterlab/Bartos/post/rc/lees_f', '/home/chesterlab/Bartos/post/img/rc/lees_f')
