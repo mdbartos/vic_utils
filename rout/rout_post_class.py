@@ -26,7 +26,14 @@ class rout_post():
 		self.egrid = pickle.load(open(egrid_path, 'rb'))
 		self.p_dat = {}
 		self.p_eqn = {}
-
+		self.reg_basins = \
+				{'cali' : ['pitt', 'cottonwood', 'tulare', 'rushcr', 'riohondo', 'redmtn', 'kern', 'coyotecr', 'corona', 'castaic', 'salton'],
+				'color' : ['lees_f', 'little_col', 'gila_imp', 'billw', 'parker', 'imperial', 'hoover', 'gc', 'davis', 'virgin', 'paria'],
+				'grb' : ['wabuska', 'lahontan', 'intermtn', 'brigham'],
+				'ark' : ['comanche'],
+				'mo' : ['pawnee', 'guer', 'colstrip', 'peck'],
+				'pnw' : ['wauna', 'elwha', 'baker', 'hmjack', 'yelm', 'sodasprings', 'eaglept', 'irongate']
+				}
 	def init_datum(self):
 		for scen in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:
 			self.datum_d.update({scen : {'d' : None, 'm' : None}})
