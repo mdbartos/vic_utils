@@ -465,6 +465,9 @@ post_pp_d.update({'wn' : WN_WECC})
 pickle.dump(post_pp_d, open('post_pp_d.p', 'wb'))
 
 
+### ALL WECC NAEMPLATE EXCEPT HYDRO
+
+all_wecc = pd.Series([float(i) for i in b.d['eGRID_2009_plant']['NAMEPCAP'].loc[b.d['eGRID_2009_plant']['NERC'] == 'WECC'].loc[b.d['eGRID_2009_plant']['PLPRMFL'] != 'WAT'].str.replace(',', '')])
 
 #WN_WECC.to_csv('WN_WECC.csv')
 
