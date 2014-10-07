@@ -457,6 +457,9 @@ class post_plot_rc_region():
 	
 		df_d = self.reg_df_d[wreg]
 
+		if self.typ == 'pickle':
+			pickle.dump( df_d, open( '%s/region_rc_%s' % (self.wpath, wreg), 'wb')) 
+
 		if self.typ == 'annual':
 	
 			g = df_d['hist'].groupby(['MONTH', 'DAY']).mean().reset_index() 
@@ -480,7 +483,59 @@ class post_plot_rc_region():
 			title('Average daily useable %s capacity' % (self.tech))
 			xlabel('Day of year')
 			ylabel('Useable capacity (MW)')
+
+		if self.typ == 'annual_fill':
 	
+			comb = pd.concat([self.reg_df_d[wreg][i] for i in self.reg_df_d[wreg].keys() if not 'hist' in i], axis=1)['SUM_CAP']
+			hist = self.reg_df_d[wreg]['hist'].groupby(['MONTH', 'DAY']).mean().reset_index()
+
+			a1b = pd.DataFrame(pd.concat([self.reg_df_d[wreg][i] for i in self.reg_df_d[wreg].keys() if 'a1b' in i], axis=1)['SUM_CAP'].mean(axis=1))
+
+			a2 = pd.DataFrame(pd.concat([self.reg_df_d[wreg][i] for i in self.reg_df_d[wreg].keys() if 'a2' in i], axis=1)['SUM_CAP'].mean(axis=1))	
+			
+			b1 = pd.DataFrame(pd.concat([self.reg_df_d[wreg][i] for i in self.reg_df_d[wreg].keys() if 'b1' in i], axis=1)['SUM_CAP'].mean(axis=1))
+
+
+			comb['MONTH'] = [i.month for i in comb.index]
+			comb['DAY'] = [i.day for i in comb.index]
+			comb = comb.groupby(['MONTH', 'DAY']).mean()
+
+			a1b['MONTH'] = [i.month for i in a1b.index]
+			a1b['DAY'] = [i.day for i in a1b.index]
+			a1b = a1b.groupby(['MONTH', 'DAY']).mean().reset_index()[0]
+
+			a2['MONTH'] = [i.month for i in a2.index]
+			a2['DAY'] = [i.day for i in a2.index]
+			a2 = a2.groupby(['MONTH', 'DAY']).mean().reset_index()[0]
+
+			b1['MONTH'] = [i.month for i in b1.index]
+			b1['DAY'] = [i.day for i in b1.index]
+			b1 = b1.groupby(['MONTH', 'DAY']).mean().reset_index()[0]
+
+			print comb
+
+			comb['max'] = comb.max(axis=1)
+			comb['min'] = comb.min(axis=1)
+			comb = comb.reset_index()
+
+			print comb
+
+			x = comb.index
+			y_upper = pd.rolling_mean(comb['max'], 14).fillna(comb['max']).values
+			y_lower = pd.rolling_mean(comb['min'], 14).fillna(comb['min']).values
+
+			plt.fill_between(x, y_upper, y_lower, facecolor="0.85", linewidth=0)
+			plt.plot(hist.index, pd.rolling_mean(hist['SUM_CAP'], 14).fillna(hist), color='black', label='hist')
+			plt.plot(a1b.index, pd.rolling_mean(a1b, 14).fillna(a1b), color='royalblue', label='a1b')
+			plt.plot(a2.index, pd.rolling_mean(a2, 14).fillna(a2), color='midnightblue', label='a2')
+			plt.plot(b1.index, pd.rolling_mean(b1, 14).fillna(b1), color='lightskyblue', label='b1')
+
+			xlim([1,366])
+			title('%s' % (wreg))
+			xlabel('Day of year')
+			ylabel('Useable capacity (MW)')
+			plt.legend(loc=4)
+
 		if self.typ == 'century':
 	
 			g = df_d['hist'].groupby('YEAR').mean().reset_index() 
@@ -527,8 +582,8 @@ class post_plot_rc_region():
 		if not os.path.exists(self.wpath):
 			os.mkdir(self.wpath)
 	
-		plt.savefig('%s/%s.png' % (self.wpath, wreg), bbox_inches='tight')
-		clf()
+#UNCOMMENT THIS		plt.savefig('%s/%s.png' % (self.wpath, wreg), bbox_inches='tight')
+#		clf()
 
 	def plot_op_region(self, wreg):
 
@@ -847,12 +902,16 @@ for v in b.reg_basins.keys():
 	b.plot_region(v)
 
 
+b = post_plot_rc_region('/home/chesterlab/Bartos/post/rc', '/home/chesterlab/Bartos/post/img/reg', 'rc', 'annual_fill', '/home/chesterlab/Bartos/VIC/input/dict/post_pp_d.p')
+
 b = post_plot_rc_region('/home/chesterlab/Bartos/post/op', '/home/chesterlab/Bartos/post/img/reg', 'op', 'period', '/home/chesterlab/Bartos/VIC/input/dict/post_pp_d.p')
 
 for v in b.reg_d.keys():
 	b.plot_op_region(v)
 
 b = post_plot_rc_region('/home/chesterlab/Bartos/post/ct', '/home/chesterlab/Bartos/post/img/reg', 'ct', 'period', '/home/chesterlab/Bartos/VIC/input/dict/post_pp_d.p')
+
+b = post_plot_rc_region('/home/chesterlab/Bartos/post/wn', '/home/chesterlab/Bartos/post/img/reg', 'wn', 'annual', '/home/chesterlab/Bartos/VIC/input/dict/post_pp_d.p')
 
 b = post_plot_rc_region('/home/chesterlab/Bartos/post/rc', '/home/chesterlab/Bartos/post/img/reg', 'rc', 'annual', '/home/chesterlab/Bartos/VIC/input/dict/post_pp_d.p')
 b.prep_reg_basins()
@@ -878,12 +937,13 @@ class sum_regions():
 		self.rc = pickle.load(open('/home/chesterlab/Bartos/post/d/rc_region.p', 'rb'))
 		self.op = pickle.load(open('/home/chesterlab/Bartos/post/d/op_region.p', 'rb'))
 		self.hy = pickle.load(open('/home/chesterlab/Bartos/post/d/hy_region.p', 'rb'))
-		self.pv = pickle.load(open('/home/chesterlab/Bartos/post/d/pv_region.p', 'rb'))  
+		self.pv = pickle.load(open('/home/chesterlab/Bartos/post/d/pv_region.p', 'rb')) 
+		self.wn = pickle.load(open('/home/chesterlab/Bartos/post/d/wn_region.p', 'rb'))  	
 		self.hy['crb'] = self.hy['pnw']
 		del self.hy['pnw']
 		
 		self.regs = ['color', 'mo', 'crb', 'cali', 'grb', 'ark']
-		self.tech_d = {'ct' : self.ct, 'rc' : self.rc, 'op' : self.op, 'hy' : self.hy, 'pv' : self.pv}
+		self.tech_d = {'ct' : self.ct, 'rc' : self.rc, 'op' : self.op, 'hy' : self.hy, 'pv' : self.pv, 'wn' : self.wn}
 		
 		self.df_d = {}
 		self.reg_techs = {}
