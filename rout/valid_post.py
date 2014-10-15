@@ -5,6 +5,8 @@ from scipy.stats import gaussian_kde
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
 import datetime
+from matplotlib.colors import LogNorm
+from pylab import *
 
 ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -61,6 +63,7 @@ def plot_stncode(stn_code, basin):
 			
 	rout = pd.read_fwf('%s/%s/%s' % (rpath, basin, fn), header=None, widths=[12, 12, 12, 13])
 	rout.columns = ['year', 'month', 'day', 'rout_cfs']
+	rout = rout.loc[rout['month'].isin([1,2,3,4,5,6,7,8,9,10,11,12])]
 	mkdate = lambda x: datetime.date(int(x['year']), int(x['month']), int(x['day']))
 	rout['date'] = rout.apply(mkdate, axis=1)
 	rout = rout.set_index('date')
@@ -68,6 +71,8 @@ def plot_stncode(stn_code, basin):
 	valid = pd.read_csv('%s/%s/%s.csv' % (vpath, basin, stn_code))
 	flowcol = [i for i in valid.columns if i[0] in ['0','1','2','3','4','5','6','7','8','9'] and i[-1] != 'd']
 	print flowcol
+	if len(flowcol) > 1:
+		flowcol = [i for i in flowcol if i[-1] == '3']
 	valid['datetime'] = pd.to_datetime(valid['datetime'])
 	valid = valid.set_index('datetime')
 
@@ -75,17 +80,35 @@ def plot_stncode(stn_code, basin):
 
 	x = combined[flowcol].astype(float).values
 	y = combined['rout_cfs'].values
-	print x, y
+#	print x, y
 	x = np.reshape(x, (len(x),))	
-	print x.shape
-	print y.shape
-	print x, y
-	plt.scatter(x,y)
-	plt.plot(x,x)
-	plt.savefig('%s/%s.png' % (wbpath, stn_code), bbox_inches='tight')
-	plt.clf()
+#	print x.shape
+#	print y.shape
+#	print x, y
 
-	print 1 - sum((y-x)**2)/sum((x-np.mean(x))**2)
+	fig = plt.figure()
+	r2 = pd.Series(y).corr(pd.Series(x))
+	n = len(x)
+	plt.hist2d(x, y, bins=200, norm=LogNorm())
+	props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+	plt.figtext(0.15, 0.82, 'r = %.3f\nn = %s' % (r2, n), bbox=props)
+	try:
+		plt.colorbar()
+		plt.title('Observed flow vs. modeled flow at station %s' % (stn_code))
+		plt.xlabel('Observed flow (cfs)')
+		plt.ylabel('Modeled flow (cfs)')
+	
+	#	plt.scatter(x,y)
+		plt.plot(list(set(x)), list(set(x)), color='black', linewidth=0.3)
+		plt.savefig('%s/%s.png' % (wbpath, stn_code), bbox_inches='tight')
+		plt.clf()
+	except:
+		pass
+
+
+#	print 1 - sum((y-x)**2)/sum((x-np.mean(x))**2)
+
+
 
 def plot_stncode_month(stn_code, basin):
 	fn = base62_encode(stn_code)
@@ -123,8 +146,15 @@ def plot_stncode_month(stn_code, basin):
 
 
 
+b = 'wauna'
+basinpath = vpath + '/' + b
+stnlist = [int(i.split('.')[0]) for i in os.listdir(basinpath)]
 
-
+for i in stnlist:
+	try:
+		plot_stncode(i, b)
+	except:
+		continue
 
 
 
