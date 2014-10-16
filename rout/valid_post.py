@@ -53,7 +53,7 @@ vpath = '/media/melchior/BALTHASAR/nsf_hydro/post/validation'
 wbpath = '/media/melchior/BALTHASAR/nsf_hydro/post/img/validation'
 
 
-def plot_stncode(stn_code, basin):
+def plot_stncode_stack(stn_code, basin):
 	fn = base62_encode(stn_code)
 	fpad = ''.join([' ' for j in range(5-len(str(fn)))])
 	spad = ''.join(['0' for j in range(8-len(str(stn_code)))])  
@@ -108,9 +108,179 @@ def plot_stncode(stn_code, basin):
 
 #	print 1 - sum((y-x)**2)/sum((x-np.mean(x))**2)
 
+def plot_stncode_timeseries(stn_code, basin):
+	fn = base62_encode(stn_code)
+	fpad = ''.join([' ' for j in range(5-len(str(fn)))])
+	spad = ''.join(['0' for j in range(8-len(str(stn_code)))])  
+	
+	stn_code = spad + str(stn_code)
+	fn = basin + '_' + fn + fpad + '.day'
+			
+	rout = pd.read_fwf('%s/%s/%s' % (rpath, basin, fn), header=None, widths=[12, 12, 12, 13])
+	rout.columns = ['year', 'month', 'day', 'rout_cfs']
+	rout = rout.loc[rout['month'].isin([1,2,3,4,5,6,7,8,9,10,11,12])]
+	mkdate = lambda x: datetime.date(int(x['year']), int(x['month']), int(x['day']))
+	rout['date'] = rout.apply(mkdate, axis=1)
+	rout = rout.set_index('date')
+
+	valid = pd.read_csv('%s/%s/%s.csv' % (vpath, basin, stn_code))
+	flowcol = [i for i in valid.columns if i[0] in ['0','1','2','3','4','5','6','7','8','9'] and i[-1] != 'd']
+	print flowcol
+	if len(flowcol) > 1:
+		flowcol = [i for i in flowcol if i[-1] == '3']
+	valid['datetime'] = pd.to_datetime(valid['datetime'])
+	valid = valid.set_index('datetime')
+
+	combined = pd.concat([rout, valid], axis=1, join='inner').dropna()
+
+	x = combined[flowcol].astype(float)
+	y = combined['rout_cfs']
+#	print x, y
+	x = np.reshape(x, (len(x),))	
+#	print x.shape
+#	print y.shape
+#	print x, y
+
+	fig = plt.figure()
+	r2 = pd.Series(y).corr(pd.Series(x))
+	n = len(x)
+	plt.plot(x.index, x, label='observed')
+	plt.plot(y.index, y, label='modeled')
+	props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+	plt.figtext(0.15, 0.82, 'r = %.3f\nn = %s' % (r2, n), bbox=props)
+	try:
+#		plt.colorbar()
+		plt.title('Observed flow vs. modeled flow at station %s' % (stn_code))
+		plt.xlabel('Time')
+		plt.ylabel('Discharge (cfs)')
+	
+	#	plt.scatter(x,y)
+#		plt.plot(list(set(x)), list(set(x)), color='black', linewidth=0.3)
+		plt.savefig('%s/%s.png' % (wbpath, stn_code), bbox_inches='tight')
+		plt.clf()
+	except:
+		pass
+
+def plot_stncode_quantile(stn_code, basin):
+	fn = base62_encode(stn_code)
+	fpad = ''.join([' ' for j in range(5-len(str(fn)))])
+	spad = ''.join(['0' for j in range(8-len(str(stn_code)))])  
+	
+	stn_code = spad + str(stn_code)
+	fn = basin + '_' + fn + fpad + '.day'
+			
+	rout = pd.read_fwf('%s/%s/%s' % (rpath, basin, fn), header=None, widths=[12, 12, 12, 13])
+	rout.columns = ['year', 'month', 'day', 'rout_cfs']
+	rout = rout.loc[rout['month'].isin([1,2,3,4,5,6,7,8,9,10,11,12])]
+	mkdate = lambda x: datetime.date(int(x['year']), int(x['month']), int(x['day']))
+	rout['date'] = rout.apply(mkdate, axis=1)
+	rout = rout.set_index('date')
+
+	valid = pd.read_csv('%s/%s/%s.csv' % (vpath, basin, stn_code))
+	flowcol = [i for i in valid.columns if i[0] in ['0','1','2','3','4','5','6','7','8','9'] and i[-1] != 'd']
+	print flowcol
+	if len(flowcol) > 1:
+		flowcol = [i for i in flowcol if i[-1] == '3']
+	valid['datetime'] = pd.to_datetime(valid['datetime'])
+	valid = valid.set_index('datetime')
+
+	combined = pd.concat([rout, valid], axis=1, join='inner').dropna()
+
+	x = combined[flowcol].astype(float)
+	y = combined['rout_cfs']
+#	print x, y
+#	x = np.reshape(x, (len(x),))	
+#	print x.shape
+#	print y.shape
+#	print x, y
+
+	qx = pd.Series([x.quantile(i/100.0) for i in range(1,101)])
+	qy = pd.Series([y.quantile(i/100.0) for i in range(1,101)])
+
+	print qx
+	print qy
+
+	fig = plt.figure()
+	r2 = pd.Series(y).corr(pd.Series(x))
+	n = len(x)
+	plt.plot(qx.index, qx, label='observed')
+	plt.plot(qy.index, qy, label='modeled')
+	props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+	plt.figtext(0.15, 0.82, 'r = %.3f\nn = %s' % (r2, n), bbox=props)
+	try:
+#		plt.colorbar()
+		plt.title('Observed flow vs. modeled flow at station %s' % (stn_code))
+		plt.xlabel('Percentile')
+		plt.ylabel('Discharge (cfs)')
+		plt.xlim(0,99)	
+	#	plt.scatter(x,y)
+#		plt.plot(list(set(x)), list(set(x)), color='black', linewidth=0.3)
+		plt.savefig('%s/%s.png' % (wbpath, stn_code), bbox_inches='tight')
+		plt.clf()
+	except:
+		pass
 
 
-def plot_stncode_month(stn_code, basin):
+def plot_stncode_monthly(stn_code, basin):
+	fn = base62_encode(stn_code)
+	fpad = ''.join([' ' for j in range(5-len(str(fn)))])
+	spad = ''.join(['0' for j in range(8-len(str(stn_code)))])  
+	
+	stn_code = spad + str(stn_code)
+	fn = basin + '_' + fn + fpad + '.day'
+			
+	rout = pd.read_fwf('%s/%s/%s' % (rpath, basin, fn), header=None, widths=[12, 12, 12, 13])
+	rout.columns = ['year', 'month', 'day', 'rout_cfs']
+	rout = rout.loc[rout['month'].isin([1,2,3,4,5,6,7,8,9,10,11,12])]
+	mkdate = lambda x: datetime.date(int(x['year']), int(x['month']), int(x['day']))
+	rout['date'] = rout.apply(mkdate, axis=1)
+	rout = rout.set_index('date')
+
+	valid = pd.read_csv('%s/%s/%s.csv' % (vpath, basin, stn_code))
+	flowcol = [i for i in valid.columns if i[0] in ['0','1','2','3','4','5','6','7','8','9'] and i[-1] != 'd']
+	print flowcol
+	if len(flowcol) > 1:
+		flowcol = [i for i in flowcol if i[-1] == '3']
+	print flowcol
+	valid['datetime'] = pd.to_datetime(valid['datetime'])
+#	valid['month'] = [i.month for i in valid['datetime']]
+#	valid['day'] = [i.day for i in valid['datetime']]
+	valid = valid.set_index('datetime')
+
+	combined = pd.concat([rout, valid], axis=1, join='inner').dropna()
+	combined[flowcol] = combined[flowcol].astype(float)
+	x = combined.groupby(['month', 'day']).quantile(0.5).reset_index()[flowcol].astype(float) 
+	y = combined.groupby(['month', 'day']).quantile(0.5).reset_index()['rout_cfs'] 
+	print x, y
+#	x = np.reshape(x, (len(x),))	
+#	print x.shape
+#	print y.shape
+#	print x, y
+
+	fig = plt.figure()
+	cv = math.sqrt(np.mean((x.values - y.values)**2))/x.mean()
+	print cv
+	r2 = 0.8
+	n = len(x)
+	plt.plot(x.index, x, label='observed')
+	plt.plot(y.index, y, label='modeled')
+	props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+	plt.figtext(0.15, 0.82, 'CV = %.3f\nn = %s' % (cv, n), bbox=props)
+	try:
+#		plt.colorbar()
+		plt.title('Observed flow vs. modeled flow at station %s' % (stn_code))
+		plt.xlabel('Day of Year')
+		plt.ylabel('Discharge (cfs)')
+		plt.xlim(0,366)	
+	#	plt.scatter(x,y)
+#		plt.plot(list(set(x)), list(set(x)), color='black', linewidth=0.3)
+		plt.savefig('%s/%s.png' % (wbpath, stn_code), bbox_inches='tight')
+		plt.clf()
+	except:
+		pass
+
+
+def plot_stncode_stack_month(stn_code, basin):
 	fn = base62_encode(stn_code)
 	fpad = ''.join([' ' for j in range(5-len(str(fn)))])
 	spad = ''.join(['0' for j in range(8-len(str(stn_code)))])  
@@ -146,114 +316,13 @@ def plot_stncode_month(stn_code, basin):
 
 
 
-b = 'wauna'
+b = 'baker'
 basinpath = vpath + '/' + b
 stnlist = [int(i.split('.')[0]) for i in os.listdir(basinpath)]
 
 for i in stnlist:
 	try:
-		plot_stncode(i, b)
+		plot_stncode_timeseries(i, b)
 	except:
 		continue
 
-
-
-#for basin in os.listdir(rpath):
-
-for basin in ['guer']:
-	for fn in os.listdir('%s/%s' % (rpath, basin)):
-		if fn.endswith('day'):
-
-	
-			stn_code = base62_decode(fn.split('.')[0].split('_')[-1].split()[0])
-			fpad = ''.join(['0' for j in range(8-len(str(stn_code)))])
-		
-			stn_code = fpad + str(stn_code) + '.csv'
-
-			if stn_code in os.listdir(vpath + '/' + basin):
-				print stn_code
-
-				rout = pd.read_fwf('%s/%s/%s' % (rpath, basin, fn), header=None, widths=[12, 12, 12, 13])
-				rout.columns = ['year', 'month', 'day', 'rout_cfs']
-				mkdate = lambda x: datetime.date(int(x['year']), int(x['month']), int(x['day']))
-				rout['date'] = rout.apply(mkdate, axis=1)
-				rout = rout.set_index('date')
-	
-				valid = pd.read_csv('%s/%s/%s' % (vpath, basin, stn_code))
-				flowcol = [i for i in valid.columns if i[0] in ['0','1','2','3','4','5','6','7','8','9'] and i[-1] != 'd']
-				print flowcol
-				valid['datetime'] = pd.to_datetime(valid['datetime'])
-				valid = valid.set_index('datetime')
-	
-				combined = pd.concat([rout, valid], axis=1, join='inner').dropna()
-	
-				x = combined[flowcol].astype(float).values
-				y = combined['rout_cfs'].values
-				print x, y
-				x = np.reshape(x, (len(x),))	
-				print x.shape
-				print y.shape
-				print x, y
-				plt.scatter(x,y)
-				plt.plot(x,x)
-				plt.savefig('%s/%s.png' % (wbpath, stn_code.split('.')[0]), bbox_inches='tight')
-				plt.clf()
-			
-	#		xy = np.vstack([x, y])
-	#		z = gaussian_kde(xy)(xy)
-
-	#		plt.figure()
-	#		plt.scatter(x, y, c=z, s=100, edgecolor='')	
-	#		plt.savefig('%s/%s.png' % (wbpath, stn_code), bbox_inches='tight')
-	#		plt.clf()
-			print len(x), len(y)
-
-
-
-
-
-#### CREATE PLOT
-
-			nullfmt   = NullFormatter()         # no labels
-			
-			# definitions for the axes
-			left, width = 0.1, 0.65
-			bottom, height = 0.1, 0.65
-			bottom_h = left_h = left+width+0.02
-			
-			rect_scatter = [left, bottom, width, height]
-			rect_histx = [left, bottom_h, width, 0.2]
-			rect_histy = [left_h, bottom, 0.2, height]
-			
-			# start with a rectangular Figure
-			plt.figure(1, figsize=(8,8))
-			
-			axScatter = plt.axes(rect_scatter)
-			axHistx = plt.axes(rect_histx)
-			axHisty = plt.axes(rect_histy)
-			
-			# no labels
-			axHistx.xaxis.set_major_formatter(nullfmt)
-			axHisty.yaxis.set_major_formatter(nullfmt)
-			
-			# the scatter plot:
-			axScatter.scatter(x, y)
-			
-			# now determine nice limits by hand:
-			binwidth = 0.25
-			xymax = np.max( [np.max(np.fabs(x)), np.max(np.fabs(y))] )
-			lim = ( int(xymax/binwidth) + 1) * binwidth
-			
-			axScatter.set_xlim( (-lim, lim) )
-			axScatter.set_ylim( (-lim, lim) )
-			
-			bins = np.arange(-lim, lim + binwidth, binwidth)
-			axHistx.hist(x, bins=bins)
-			axHisty.hist(y, bins=bins, orientation='horizontal')
-			
-			axHistx.set_xlim( axScatter.get_xlim() )
-			axHisty.set_ylim( axScatter.get_ylim() )
-
-			plt.savefig('%s/%s.png' % (wbpath, stn_code), bbox_inches='tight')
-			break
-			#plt.show()
