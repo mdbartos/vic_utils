@@ -50,3 +50,49 @@ for col in df.columns:
         if df.loc[idx, col] == 5129:
             ll.append('data_%s_%s' % (idx, col))
 
+pd.DataFrame(ll).to_csv('canada_ll.csv')
+
+#################################
+
+c = pd.read_csv('canada_ll.csv', index_col=0)
+c = c['0'].values
+
+dirli = ['/media/melchior/BALTHASAR/nsf_hydro/VIC/input/vic/forcing/hist/sub-basin/wauna1','/media/melchior/BALTHASAR/nsf_hydro/VIC/input/vic/forcing/hist/sub-basin/wauna2','/media/melchior/BALTHASAR/nsf_hydro/VIC/input/vic/forcing/hist/sub-basin/wauna3','/media/melchior/BALTHASAR/nsf_hydro/VIC/input/vic/forcing/hist/sub-basin/wauna4']
+
+fileli = []
+
+for i in dirli:
+	fileli.extend(os.listdir(i))
+
+canada_new = [i for i in c if not i in fileli]
+
+lats = sorted(set([float(i.split('_')[1]) for i in canada_new]))
+lons = sorted(set([float(i.split('_')[2]) for i in canada_new])) 
+
+df = pd.DataFrame(index = lats, columns=lons)
+
+for i in canada_new:
+	clat = float(i.split('_')[1])
+	clon = float(i.split('_')[2])
+	df.loc[clat, clon] = 1
+
+li_05 = []
+
+for fn in os.listdir('/home/melchior/Documents/maurer_0.5d/maurer_0.5d_hist_ascii/canada'):
+	dlat0 = float(fn.split('_')[1])-0.25
+	dlat1 = float(fn.split('_')[1])+0.25
+	dlon0 = float(fn.split('_')[2])-0.25
+	dlon1 = float(fn.split('_')[2])+0.25
+
+	mat = df.loc[(df.index >= dlat0) & (df.index <= dlat1), (df.columns >= dlon0) & (df.columns <= dlon1)].values
+	if 1 in mat:
+		li_05.append(fn)
+
+os.chdir('/home/melchior/Documents/maurer_0.5d/maurer_0.5d_hist_ascii/canada')
+
+os.mkdir('canada')
+
+import shutil
+
+for i in li_05:
+	shutil.copy(i, './canada')
