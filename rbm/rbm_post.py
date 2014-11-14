@@ -127,7 +127,7 @@ class rbm_post():
 
 
 
-	def make_rc_outfiles(self, scen, basin, wpath):
+	def make_rc_outfiles(self, scen, basin, wpath, sigma = 0.8, gsum = 0.7, gwint = 0.9, ncc = 6, Tapp = 6):
 		wtemp_path = self.rbm_path + '/' + basin
 		atmo_path = self.atm_path + '/' + scen
 		rc_rout_path = self.rc_rout_path + '/' + scen + '/' + basin
@@ -239,14 +239,14 @@ class rbm_post():
 			Oout = Bf*Pws/(cat_df['OUT_PRESSURE'] - Pws)
 			Hin = (cat_df['OUT_AIR_TEMP']*(1.01 + 1.89*Oin) + 2500*Oin)/1000
 #			Hout = (cat_df['OUT_AIR_TEMP']*(1.01 + 1.89*Oout) + 2500*Oout)/1000 ##TEMP ISN"T THE SAME AS Hin!!
-			sigma = 0.8
+#			sigma = 0.8
 			hfg = 2.45 #MJ/kg
 			cpw = 0.004179 #MJ/kg-k
-			gamma_func = lambda x: 0.7 if x['MONTH'] in [4,5,6,7,8,9] else 0.9 
+			gamma_func = lambda x: gsum if x['MONTH'] in [4,5,6,7,8,9] else gwint 
 			gamma = cat_df.apply(gamma_func, axis=1)
-			ncc = 6
+#			ncc = 6
 			tau = (1 - (ncc-1)/ncc) 
-			Tc = Twb + 6
+			Tc = Twb + Tapp
 			
 			if np.isnan(rc['ELEC_EFF_AVG']) == True:
 				plprmfl = rc['PLPRMFL']
@@ -401,7 +401,7 @@ class rbm_post():
 
 			cat_df.to_csv('%s/%s.%s' % (wpath, scen, str(pcode).split('.')[0]), sep='\t')
 
-	def get_ct(self, scen, rpath, wpath):
+	def get_ct(self, scen, rpath, wpath, rpercent=0.01):
 		
 		ct_rpath = rpath + '/' + scen + '/' + 'ct'
 		ct_spec = self.post_pp_d['ct']
@@ -436,7 +436,7 @@ class rbm_post():
 				df = pd.read_table(fn, sep='\t', names=['prcp', 'tmax', 'tmin', 'wspd'])
 				df = pd.concat([drange_fut, df['tmax']], axis=1)
 	#		df['tavg'] = (df['tmax'] + df['tmin'])/2
-			df['POWER_CAP_MW'] = float(pspec['NAMEPCAP'])*pspec['CAP_FRAC']*(-0.01*df['tmax'] + 1.15)
+			df['POWER_CAP_MW'] = float(pspec['NAMEPCAP'])*pspec['CAP_FRAC']*(-rpercent*df['tmax'] + 1.15)
 			df.to_csv('%s/%s.%s' % (wpath, scen, j), sep='\t')
 
 	def get_solar(self, scen, rpath, wpath):
@@ -566,16 +566,46 @@ for s in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'ec
 ###
 
 for s in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:
-#	b.get_ct(s, '/home/chesterlab/Bartos/VIC/input/vic/forcing', '/home/chesterlab/Bartos/post/ct')
+	b.get_ct(s, '/home/chesterlab/Bartos/VIC/input/vic/forcing', '/home/chesterlab/Bartos/post/ct_ub', rpercent=0.0083)
 #	b.get_solar(s, '/home/chesterlab/Bartos/VIC/output/solar', '/home/chesterlab/Bartos/post/pv')
-	b.get_wind(s, '/home/chesterlab/Bartos/VIC/input/vic/forcing', '/home/chesterlab/Bartos/post/wn')
+#	b.get_wind(s, '/home/chesterlab/Bartos/VIC/input/vic/forcing', '/home/chesterlab/Bartos/post/wn')
 
+#### WORST CASE
 
+for s in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:
+#	b.make_rc_outfiles(s, 'comanche', '/home/chesterlab/Bartos/post/rc_ub/comanche', sigma = 1.5, gsum = 0.6, gwint = 0.8, ncc = 3)
+#	b.make_rc_outfiles(s, 'parker', '/home/chesterlab/Bartos/post/rc_ub/parker', sigma = 1.5, gsum = 0.6, gwint = 0.8, ncc = 3)
+	b.make_rc_outfiles(s, 'paper', '/home/chesterlab/Bartos/post/rc_ub/paper', sigma = 1.5, gsum = 0.6, gwint = 0.8, ncc = 3)
+	b.make_rc_outfiles(s, 'glenn', '/home/chesterlab/Bartos/post/rc_ub/glenn', sigma = 1.5, gsum = 0.6, gwint = 0.8, ncc = 3)
+#	b.make_rc_outfiles(s, 'hoover', '/home/chesterlab/Bartos/post/rc_ub/hoover', sigma = 1.5, gsum = 0.6, gwint = 0.8, ncc = 3)
+	b.make_rc_outfiles(s, 'little_col', '/home/chesterlab/Bartos/post/rc_ub/little_col', sigma = 1.5, gsum = 0.6, gwint = 0.8, ncc = 3)
+#	b.make_rc_outfiles(s, 'pawnee', '/home/chesterlab/Bartos/post/rc_ub/pawnee', sigma = 1.5, gsum = 0.6, gwint = 0.8, ncc = 3)
+#	b.make_rc_outfiles(s, 'intermtn', '/home/chesterlab/Bartos/post/rc_ub/intermtn', sigma = 1.5, gsum = 0.6, gwint = 0.8, ncc = 3)
+#	b.make_rc_outfiles(s, 'lees_f', '/home/chesterlab/Bartos/post/rc_ub/lees_f', sigma = 1.5, gsum = 0.6, gwint = 0.8, ncc = 3)
+	b.make_rc_outfiles(s, 'colstrip', '/home/chesterlab/Bartos/post/rc_ub/colstrip', sigma = 1.5, gsum = 0.6, gwint = 0.8, ncc = 3)
+#	b.make_rc_outfiles(s, 'pitt', '/home/chesterlab/Bartos/post/rc_ub/pitt', sigma = 1.5, gsum = 0.6, gwint = 0.8, ncc = 3)
+	b.make_rc_outfiles(s, 'wabuska', '/home/chesterlab/Bartos/post/rc_ub/wabuska', sigma = 1.5, gsum = 0.6, gwint = 0.8, ncc = 3)
+	b.make_rc_outfiles(s, 'brigham', '/home/chesterlab/Bartos/post/rc_ub/brigham', sigma = 1.5, gsum = 0.6, gwint = 0.8, ncc = 3)
+	b.make_rc_outfiles(s, 'guer', '/home/chesterlab/Bartos/post/rc_ub/guer', sigma = 1.5, gsum = 0.6, gwint = 0.8, ncc = 3)
+	b.make_rc_outfiles(s, 'wauna', '/home/chesterlab/Bartos/post/rc_ub/wauna', sigma = 1.5, gsum = 0.6, gwint = 0.8, ncc = 3)
+	b.make_rc_outfiles(s, 'salton', '/home/chesterlab/Bartos/post/rc_ub/salton', sigma = 1.5, gsum = 0.6, gwint = 0.8, ncc = 3)
 
-#b = rbm_post('/media/chesterlab/My Passport/Files/VIC/input/dict/opstn.p', '/media/chesterlab/My Passport/Files/VIC/input/dict/rcstn.p', '/media/chesterlab/storage/post/rbm', '/media/chesterlab/storage/post/st_rc')
+#### BEST CASE
+for s in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:
+	b.make_rc_outfiles(s, 'comanche', '/home/chesterlab/Bartos/post/rc_lb/comanche', sigma = 0.5, gsum = 0.9, gwint = 0.9, ncc = 6)
+#	b.make_rc_outfiles(s, 'parker', '/home/chesterlab/Bartos/post/rc_lb/parker', sigma = 0.5, gsum = 0.9, gwint = 0.9, ncc = 6)
+	b.make_rc_outfiles(s, 'paper', '/home/chesterlab/Bartos/post/rc_lb/paper', sigma = 0.5, gsum = 0.9, gwint = 0.9, ncc = 6)
+	b.make_rc_outfiles(s, 'glenn', '/home/chesterlab/Bartos/post/rc_lb/glenn', sigma = 0.5, gsum = 0.9, gwint = 0.9, ncc = 6)
+#	b.make_rc_outfiles(s, 'hoover', '/home/chesterlab/Bartos/post/rc_lb/hoover', sigma = 0.5, gsum = 0.9, gwint = 0.9, ncc = 6)
+	b.make_rc_outfiles(s, 'little_col', '/home/chesterlab/Bartos/post/rc_lb/little_col', sigma = 0.5, gsum = 0.9, gwint = 0.9, ncc = 6)
+	b.make_rc_outfiles(s, 'pawnee', '/home/chesterlab/Bartos/post/rc_lb/pawnee', sigma = 0.5, gsum = 0.9, gwint = 0.9, ncc = 6)
+	b.make_rc_outfiles(s, 'intermtn', '/home/chesterlab/Bartos/post/rc_lb/intermtn', sigma = 0.5, gsum = 0.9, gwint = 0.9, ncc = 6)
+	b.make_rc_outfiles(s, 'lees_f', '/home/chesterlab/Bartos/post/rc_lb/lees_f', sigma = 0.5, gsum = 0.9, gwint = 0.9, ncc = 6)
+	b.make_rc_outfiles(s, 'colstrip', '/home/chesterlab/Bartos/post/rc_lb/colstrip', sigma = 0.5, gsum = 0.9, gwint = 0.9, ncc = 6)
+	b.make_rc_outfiles(s, 'pitt', '/home/chesterlab/Bartos/post/rc_lb/pitt', sigma = 0.5, gsum = 0.9, gwint = 0.9, ncc = 6)
+	b.make_rc_outfiles(s, 'wabuska', '/home/chesterlab/Bartos/post/rc_lb/wabuska', sigma = 0.5, gsum = 0.9, gwint = 0.9, ncc = 6)
+	b.make_rc_outfiles(s, 'brigham', '/home/chesterlab/Bartos/post/rc_lb/brigham', sigma = 0.5, gsum = 0.9, gwint = 0.9, ncc = 6)
+	b.make_rc_outfiles(s, 'guer', '/home/chesterlab/Bartos/post/rc_lb/guer', sigma = 0.5, gsum = 0.9, gwint = 0.9, ncc = 6)
+	b.make_rc_outfiles(s, 'wauna', '/home/chesterlab/Bartos/post/rc_lb/wauna', sigma = 0.5, gsum = 0.9, gwint = 0.9, ncc = 6)
+	b.make_rc_outfiles(s, 'salton', '/home/chesterlab/Bartos/post/rc_lb/salton', sigma = 0.5, gsum = 0.9, gwint = 0.9, ncc = 6)
 
-#b.make_spat_d()
-
-#b.make_diff()
-
-#b.make_rc_outfiles('hist', 'little_col', '/media/chesterlab/storage/post/wpath') 
