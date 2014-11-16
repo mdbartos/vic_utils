@@ -396,16 +396,12 @@ li = [i for i in b.latlon_c.keys() if not i in ['little_col', 'imperial', 'gc', 
 for fn in li:
 	for s in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:
 		b.rout_tables(fn, s, 'd','/home/chesterlab/Bartos/VIC/output/rout/d8')
-#	try:
 	b.make_regression(fn, intercept=True)
-	for k in b.p_eqn[fn].keys():
-		b.plot_regression(fn, k, '/home/chesterlab/Bartos/post/img/hydrostn_reg_b')
-#	except:
-#		print 'ERROR'
-	
+#	for k in b.p_eqn[fn].keys():
+#		b.plot_regression(fn, k, '/home/chesterlab/Bartos/post/img/hydrostn_reg_b')
 
-		for s in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:
-			b.apply_regression(fn, s, '/home/chesterlab/Bartos/post/hyb/%s' % (fn))
+	for s in ['hist', 'ukmo_a1b', 'ukmo_a2', 'ukmo_b1', 'echam_a1b', 'echam_a2', 'echam_b1']:
+		b.apply_regression(fn, s, '/home/chesterlab/Bartos/post/hyb/%s' % (fn))
 
 li = [i for i in b.latlon_c.keys() if not i in ['little_col', 'imperial', 'gc', 'virgin', 'paria', 'billw']]
 for fn in li:

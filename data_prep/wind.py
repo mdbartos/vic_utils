@@ -52,3 +52,96 @@ for i in df.index:
     minlon = d[min(d.keys())]
     df.loc[i, 'lon_grid'] = minlon
 
+####to_csv####
+
+data_li = list(set(['data_%s_%s' % (df.loc[i, 'lat_grid'], df.loc[i, 'lon_grid']) for i in df.index]))
+
+forcing_path = '/media/melchior/BALTHASAR/nsf_hydro/pre/source_data/source_hist_forcings/active/master'
+
+#TEST
+[i for i in data_li if not i in os.listdir(forcing_path)]
+#['data_33.8125_-102.1875', 'data_32.8125_-102.1875']
+#~500 MW
+
+####FIND LAT/LONS FOR EACH BASIN
+
+import os
+import numpy as np
+import pandas as pd
+import netCDF4
+import pickle
+from decimal import Decimal
+
+basin_masks = {}
+
+for fn in os.listdir('/media/melchior/BALTHASAR/nsf_hydro/pre/source_data/source_proj_forcings/active'):
+	if fn.endswith('nc'):
+		basin = fn.split('.')[0]
+		basin_masks.update({basin : {}})
+		ncvar = fn.split('.')[-3]
+		mask = []
+		f = netCDF4.Dataset(fn, 'r')
+		for i in range(len(f.variables['lat'][:])):
+			for j in range(len(f.variables['lon'][:])):
+				if type(f.variables[ncvar][0, i, j]) != np.ma.core.MaskedConstant:
+					mask.append([i,j])
+		print len(mask), len(f.variables['lat'][:])*len(f.variables['lon'][:])
+		basin_masks[basin].update({'coords':['_'.join([str(float(f.variables['lat'][k[0]])), str(float(f.variables['lon'][k[1]]))]) for k in mask]})
+		basin_masks[basin].update({'ix': mask})
+
+###DUMP PICKLE
+pickle.dump(basin_masks, open('basin_masks.p', 'wb'))
+
+###GET WIND COORDS IN EACH BASIN
+windpath = '/home/melchior/Dropbox/Southwest Heat Vulnerability Team Share/ppdb_data/USGS_wind.csv'
+
+df = pd.read_csv(windpath)
+
+coord_li = list(set(['%s_%s' % (df.loc[i, 'lat_grid'], df.loc[i, 'lon_grid']) for i in df.index]))
+
+reg_d = {}
+
+for j in basin_masks.keys():
+	reg_d.update({j : {'coords':[], 'ix':[]}})
+
+for i in coord_li:
+	for j in basin_masks.keys():
+		if i in basin_masks[j]['coords']:
+			reg_d[j]['coords'].append(i)
+			reg_d[j]['ix'].append(basin_masks[j]['ix'][basin_masks[j]['coords'].index(i)])
+
+####EXTRACT FROM NETCDF FILES
+
+master_path = '/media/melchior/BALTHASAR/nsf_hydro/pre/source_data/source_proj_forcings/active/master'
+
+def extract_wind_nc(scen, model, basin, outpath):
+
+	outfile = outpath + '/' + model + '_' + scen
+	if not os.path.exists(outfile):
+		os.mkdir(outfile)
+
+	coords = reg_d[basin]['coords']
+	
+	for i in range(len(coords)):
+		c = coords[i]
+		ix = reg_d[basin]['ix'][i]
+		df = pd.DataFrame()
+
+		for y in range(2010,2100):
+			year_df = pd.DataFrame()
+
+			for v in ['prcp', 'tmax', 'tmin', 'wind']:
+				f = netCDF4.Dataset('%s/%s.sres%s.%s.daily.%s.%s.nc' % (master_path, basin, scen, model, v, y) , 'r')
+				s = f.variables[v][:, ix[0], ix[1]]
+				year_df[v] = s
+				f.close()
+
+			year_df.index = pd.date_range(start=datetime.date(y,1,1), end=datetime.date(y,12,31))
+			df = df.append(year_df)
+		df = df[['prcp', 'tmax', 'tmin', 'wind']]
+		df.to_csv('%s/data_%s' % (outfile, coords[i]), sep='\t', index=False, header=False)
+
+for b in reg_d.keys():
+	for sc in ['a1b', 'a2', 'b1']:
+		for m in ['mpi_echam5.3', 'ukmo_hadcm3.1']:
+			extract_wind_nc(sc, m, b, '/home/melchior/Desktop/wind')
