@@ -70,7 +70,7 @@ import numpy as np
 import pandas as pd
 import netCDF4
 import pickle
-from decimal import Decimal
+import shutil
 
 basin_masks = {}
 
@@ -90,7 +90,8 @@ for fn in os.listdir('/media/melchior/BALTHASAR/nsf_hydro/pre/source_data/source
 		basin_masks[basin].update({'ix': mask})
 
 ###DUMP PICKLE
-pickle.dump(basin_masks, open('basin_masks.p', 'wb'))
+#pickle.dump(basin_masks, open('basin_masks.p', 'wb'))
+basin_masks = pickle.load(open('/media/melchior/BALTHASAR/nsf_hydro/VIC/input/dict/basin_masks.p', 'r')) 
 
 ###GET WIND COORDS IN EACH BASIN
 windpath = '/home/melchior/Dropbox/Southwest Heat Vulnerability Team Share/ppdb_data/USGS_wind.csv'
@@ -113,6 +114,17 @@ for i in coord_li:
 ####EXTRACT FROM NETCDF FILES
 
 master_path = '/media/melchior/BALTHASAR/nsf_hydro/pre/source_data/source_proj_forcings/active/master'
+
+def extract_wind_hist(basin, inpath, outpath):
+	outfile = outpath + '/hist'
+	if not os.path.exists(outfile):
+		os.mkdir(outfile)
+	coords = reg_d[basin]['coords']
+	file_li = ['data_%s' % (i) for i in coords]
+	for fn in file_li:
+		df = pd.read_csv('%s/%s' % (inpath, fn), sep='\t', header=None, index_col=False, names=['yr', 'mo', 'day', 'prcp', 'tmax', 'tmin', 'wind'])
+		df = df[['prcp', 'tmax', 'tmin', 'wind']]
+		df.to_csv('%s/%s' % (outfile, fn), sep='\t', header=False, index=False)
 
 def extract_wind_nc(scen, model, basin, outpath):
 
@@ -142,6 +154,54 @@ def extract_wind_nc(scen, model, basin, outpath):
 		df.to_csv('%s/data_%s' % (outfile, coords[i]), sep='\t', index=False, header=False)
 
 for b in reg_d.keys():
-	for sc in ['a1b', 'a2', 'b1']:
-		for m in ['mpi_echam5.3', 'ukmo_hadcm3.1']:
-			extract_wind_nc(sc, m, b, '/home/melchior/Desktop/wind')
+	extract_wind_hist(b, '/media/melchior/BALTHASAR/nsf_hydro/pre/source_data/source_hist_forcings/active/master', '/home/melchior/Desktop/wind_new')
+
+#for b in reg_d.keys():
+#	for sc in ['a1b', 'a2', 'b1']:
+#		for m in ['mpi_echam5.3', 'ukmo_hadcm3.1']:
+#			extract_wind_nc(sc, m, b, '/home/melchior/Desktop/wind')
+
+#### GET PARAMS
+
+wind_d = {}
+
+wind_d['wind'] = [tuple([float(i.split('_')[1]), float(i.split('_')[2])]) for i in os.listdir('/home/melchior/Desktop/wind_new/hist')]
+
+outdir = '/home/melchior/Desktop/wind_new/wind_params'
+
+#param_clip(wind_d['wind'], outdir)
+
+#######################################
+####APPLY WIND POWER EQUATION TO FORCINGS
+
+import os
+import numpy as np
+import pandas as pd
+
+windpath = '/home/melchior/Dropbox/Southwest Heat Vulnerability Team Share/ppdb_data/USGS_wind.csv'
+
+df = pd.read_csv(windpath)
+
+g = df.groupby(['lat_grid', 'lon_grid', 'mpower_coeff', 'rotor_s_a', 'rated_wspd']).sum()['MW_turbine']
+
+def make_windpower(scen, rpath, wpath):
+	ct = 0
+	for i in g.index:
+		ct = ct + 1
+		
+		lat = i[0]
+		lon = i[1]
+		mpower_coeff = i[2]
+		rotor_s_a = i[3]
+		rated_wspd = i[4]
+		nameplate = g[i]
+
+		rname = 'full_data_%s_%s' % (lat, lon)
+		wname = 'wind_%s_%s_%s.%s' % (lat, lon, ct, scen)
+
+		rfile = rpath + '/' + rname
+		wfile = wpath + '/' + wname
+
+		df = pd.read_csv(rfile, sep='\t', skiprows=6, names=['YEAR', 'MONTH', 'DAY', 'OUT_WIND', 'OUT_DENSITY', 'OUT_PRESSURE', 'OUT_VP', 'OUT_AIR_TEMP'])	
+
+
