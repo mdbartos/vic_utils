@@ -4,7 +4,8 @@ import pysal as ps
 import os
 
 
-db = ps.open('/home/akagi/GIS/usgs_wind/USGS_windturbine_201307.dbf')
+#db = ps.open('/home/akagi/GIS/usgs_wind/USGS_windturbine_201307.dbf')
+db = ps.open('/home/tabris/GIS/usgs_wind/USGS_windturbine_201307.dbf')
 dbpass = {col: db.by_col(col) for col in db.header}
 df = pd.DataFrame(dbpass)
 
@@ -41,14 +42,14 @@ for i in df.index:
     latcells = [int(df.loc[i, 'lat_DD']) + g for g in [0.0625*j for j in [-13,-11,-9,-7,-5,-3,-1, 1,3,5,7,9,11,13]]]
     d = {}
     for k in latcells:
-        d.update({df.loc[i, 'lat_DD'] - k : k})
+        d.update({abs(df.loc[i, 'lat_DD'] - k) : k})
     minlat = d[min(d.keys())]
     df.loc[i, 'lat_grid'] = minlat
 
     loncells = [int(df.loc[i, 'long_DD']) + g for g in [0.0625*j for j in [-13,-11,-9,-7,-5,-3,-1, 1,3,5,7,9,11,13]]]
     d = {}
     for k in loncells:
-        d.update({df.loc[i, 'long_DD'] - k : k})
+        d.update({abs(df.loc[i, 'long_DD'] - k) : k})
     minlon = d[min(d.keys())]
     df.loc[i, 'lon_grid'] = minlon
 
