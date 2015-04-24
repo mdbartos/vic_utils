@@ -4,7 +4,7 @@ import pandas as pd
 import datetime
 
 class gather_solar():
-	def __init__(self, eiapath='/home/tabris/Desktop/EIA_form_data/eia_form_860/eia8602012'):
+	def __init__(self, eiapath='~/EIA_form_data/eia_form_860/eia8602012'):
 		gen = pd.read_excel('%s/GeneratorY2012.xlsx' % (eiapath), skiprows=1)
 		plant = pd.read_excel('%s/PlantY2012.xlsx' % (eiapath), skiprows=1)
 
@@ -58,7 +58,7 @@ class gather_solar():
 
 		#########################################
 
-		self.basin_masks = pd.read_pickle('/home/chesterlab/Bartos/pre/source_proj_forcings/basin_masks.p') 
+		self.basin_masks = pd.read_pickle('~/pre/source_proj_forcings/basin_masks.p') 
 
 		###GET SOLAR COORDS IN EACH BASIN
 
