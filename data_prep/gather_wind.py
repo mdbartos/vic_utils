@@ -4,12 +4,12 @@ import os
 import datetime
 import pickle
 
-#windpath = '/home/tabris/Dropbox/Southwest Heat Vulnerability Team Share/ppdb_data/USGS_wind.csv'
+#windpath = '~/Dropbox/Southwest Heat Vulnerability Team Share/ppdb_data/USGS_wind.csv'
 
-#nrel_path = '/home/tabris/Downloads/nrel_wind'
+#nrel_path = '~/Downloads/nrel_wind'
 
 class gather_wind():
-	def __init__(self, windpath='/home/tabris/Dropbox/Southwest Heat Vulnerability Team Share/ppdb_data/USGS_wind.csv', nrel_path = '/home/tabris/Downloads/nrel_wind'):
+	def __init__(self, windpath='~/Dropbox/Southwest Heat Vulnerability Team Share/ppdb_data/USGS_wind.csv', nrel_path = '~/Downloads/nrel_wind'):
 		self.windpath = windpath
 		self.nrel_path = nrel_path
 		self.df = pd.read_csv(self.windpath)
@@ -36,7 +36,7 @@ class gather_wind():
 
 		self.key_coords = self.g.set_index('nrel_str')[['lat_grid', 'lon_grid']]	
 		
-		self.basin_masks = pd.read_pickle('/home/chesterlab/Bartos/pre/source_proj_forcings/basin_masks.p') 
+		self.basin_masks = pd.read_pickle('~/Bartos/pre/source_proj_forcings/basin_masks.p') 
 
 			###GET SOLAR COORDS IN EACH BASIN
 
@@ -68,7 +68,7 @@ class gather_wind():
 			ll_li = list(wnkey.loc[wnkey['basin'] == k].index)
 			self.reg_pcodes.update({k : ll_li})
 
-	def cat_wind_files(self, inpath='/home/chesterlab/Bartos/post/wn', cap='cap_mw'):
+	def cat_wind_files(self, inpath='~/Bartos/post/wn', cap='cap_mw'):
 
 		self.df_d = {}
 		
