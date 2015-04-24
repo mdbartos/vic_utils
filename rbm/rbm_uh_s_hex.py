@@ -71,17 +71,6 @@ def gen_uh_cfg(dpath, ipath, outpath, cfgpath, basin):
 	with open(cfgwpath, 'w') as outfile:
 		outfile.write(w)
 	
-
-for fn in os.listdir('/media/melchior/BALTHASAR/nsf_hydro/VIC/output/full-energy/hist'):
-	make_rbm_stn('/home/chesterlab/Bartos/VIC/input/rout/d8/%s/%s.dir' % (fn, fn), '/home/chesterlab/Bartos/VIC/input/rout/d8/%s' % (fn), fn) 
-	gen_uh_cfg('/home/chesterlab/Bartos/VIC/config/rout/d8/rout_input.default_d8','/home/chesterlab/Bartos/VIC/input/rout/d8', '/home/chesterlab/Bartos/VIC/output/rbm/uh_gen/d8','/home/chesterlab/Bartos/VIC/config/rbm/uh_gen/d8' , fn)
-
-
-with open('/home/chesterlab/Bartos/VIC/config/rbm/uh_gen/rbm_uh_sh_run', 'w') as wfile:
-	m = ''.join(metafile)
-	wfile.write(m)
-
-
 ##RENAME##
 
 def rename_rbm_stn(uhpath, wpath, dpath):
@@ -118,10 +107,3 @@ def rename_rbm_stn(uhpath, wpath, dpath):
 		fs = ff.split('_')
 		print fs[0], fs[1]
 		shutil.copy('%s/%s' % (uhpath, fn), '%s/%s_%s.uh_s' % (wpath, yd[int(fs[0], 16)], xd[int(fs[1], 16)]))
-		#os.remove('%s/%s' % (uhpath, fn))
-
-
-for u in os.listdir('/media/melchior/BALTHASAR/nsf_hydro/VIC/output/full-energy/hist'):
-	rename_rbm_stn('/home/chesterlab/Bartos/VIC/output/rbm/uh_gen/d8/%s/uh_s' % (u), '/home/chesterlab/Bartos/VIC/input/rbm/run/d8/%s/uh' % (u),'/home/chesterlab/Bartos/VIC/input/rout/d8/%s/%s.dir' % (u, u))
-
-
