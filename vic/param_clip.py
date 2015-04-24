@@ -4,10 +4,6 @@ import pickle
 import os
 import ast 
 
-#from colo_r_basins import latlon_x as self.latlon_d
-#latlon_d = pickle.load( open( "utpp_basins.p", "rb"))
-#master_param = pd.HDFStore('master_param.h5')
-
 ##########################################
 #CLIP REGIONAL SOIL PARAMS TO TARGET BASIN
 ##########################################
@@ -43,7 +39,6 @@ class clip_params():
 		for j, k in soil[27].iteritems():
 			if k <= 0.0:
 				print "warning bubble pressure", j, k
-	#	print soil
 		self.master_param.close()
 		soil['latlon'] = zip(soil[2], soil[3])
 		soil['st_latlon'] = [str(i) for i in soil['latlon']]
@@ -52,14 +47,12 @@ class clip_params():
 		del soil['st_latlon']
 		latlon_s = [str(i) for i in self.latlon_d[basin]]
 		soilclip = soil.ix[latlon_s]
-	#	print soilclip
 		soilclip = soilclip.dropna(axis=0, subset=[0])
 		soilclip = soilclip.dropna(axis=1)
 		soilclip = soilclip.drop_duplicates(cols=1)
 		soilclip[0] = soilclip[0].astype(int)
 		self.soilclip = soilclip
 		print soilclip
-	#	print set(soilclip[0])
 		if not os.path.exists('%s/soil' % (wpath)):
 			os.mkdir('%s/soil' % (wpath))
 		else:
@@ -83,9 +76,6 @@ class clip_params():
 				par_l = line.split()
 				gridcel = par_l[0]
 				nveg = ast.literal_eval(par_l[1])
-	#			print gridcel, type(gridcel)
-	#			print nveg, type(nveg)
-	#			print i
 				nlines = [j for j in rf[i+1: i + nveg*2 + 1]]
 				self.veg_d.update({gridcel : (nveg, nlines)})
 	
@@ -101,15 +91,12 @@ class clip_params():
 		else:
 			pass
 		with open('%s/veg/veg_%s' % (wpath, basin), 'w') as newveg:
-	#	print gridcel_s
 			for i in list(set(gridcel_s.values)):
 				i = i.astype(str)
 				newveg.write("%s %s\n" % (i, self.veg_d[i][0]))
 				for j in self.veg_d[i][1]:
 					newveg.write("%s" % (j))
 				
-	
-	
 	##############################################			
 	#CLIP SNOWBANDS TO TARGET BASIN
 	##############################################
@@ -123,84 +110,14 @@ class clip_params():
 		self.master_param.close()
 		snow = snow.set_index(snow[0])
 		latlon_s = [str(i) for i in self.latlon_d[basin]]
-	#	print latlon_s
 		gridcel_s = gridcel[latlon_s]
-	#	print gridcel_s
 		snowclip = snow.ix[gridcel_s]
-	#	print snowclip.tail()
 		snowclip = snowclip.drop_duplicates(cols=0)
 		snowclip = snowclip.dropna(axis=0, subset=[0])
 		snowclip = snowclip.dropna(axis=1)
 		self.snowclip = snowclip
-	#	for i in snowclip.columns:
-	#		snowclip[i] = np.round(snowclip[i], 4)
-	#	print snowclip
-	#	print len(snowclip.index)
-	#	print len(set(list(snowclip.index)))
 		if not os.path.exists('%s/snowbands' % (wpath)):
 			os.mkdir('%s/snowbands' % (wpath))
 		else:
 			pass
 		snowclip.to_csv('%s/snowbands/snowbands_%s' % (wpath, basin), sep = ' ', header=False, index=False)
-
-
-##################################################
-#APPLY CLIP
-##################################################
-
-#latlon_miss = {}
-
-#latlon_miss['lees_f_missing'] = [(42.9375, -110.6875), (42.8125, -110.6875), (42.6875, -110.6875), (42.8125, -110.5625), (42.6875, -110.5625), (42.5625, -110.5625), (43.0625, -110.4375), (42.9375, -110.4375), (43.3125, -110.3125), (43.0625, -110.3125), (42.9375, -110.3125), (43.3125, -110.1875), (43.1875, -110.1875), (43.0625, -110.1875), (37.5625, -106.8125), (36.8125, -106.6875), (37.0625, -106.5625)]
-
-rc_p = pickle.load(open('/home/chesterlab/Bartos/VIC/input/dict/tech_d.p'))
-rc_li = []
-rc_d = {}
-
-for i in rc_p['st_rc'].keys():
-	for j in rc_p['st_rc'][i].values():
-		rc_li.append(j)
-
-rc_d['st_rc'] = list(set(rc_li))
-
-b = [i for i in rc_d.keys()]
-
-c = clip_params('/home/chesterlab/Bartos/VIC/input/vic/params/master/master_param.h5', '/home/chesterlab/Bartos/VIC/input/vic/params/master/master_veg', rc_d)
-
-#outdir = '/home/chesterlab/Desktop/test_param'
-
-outdir = '/home/chesterlab/Bartos/VIC/input/vic/params/st_rc'
-
-
-
-sol_p = pickle.load(open('/home/chesterlab/Bartos/VIC/input/dict/tech_d.p', 'rb'))
-sol_li = []
-sol_d = {}
-
-for i in sol_p['solar'].keys():
-	for j in sol_p['solar'][i].values():
-		sol_li.append(j)
-
-sol_d['solar'] = list(set(sol_li))
-
-b = [i for i in sol_d.keys()]
-
-c = clip_params('/home/chesterlab/Bartos/VIC/input/vic/params/master/master_param.h5', '/home/chesterlab/Bartos/VIC/input/vic/params/master/master_veg', sol_d)
-
-#outdir = '/home/chesterlab/Desktop/test_param'
-
-outdir = '/home/chesterlab/Bartos/VIC/input/vic/params/solar'
-
-
-
-
-
-for basin in b:
-	c.clip_soil(basin, outdir)
-
-c.make_veg_d()
-
-for basin in b:
-	c.clip_veg(basin, outdir)
-
-for basin in b:
-	c.clip_snow(basin, outdir)
