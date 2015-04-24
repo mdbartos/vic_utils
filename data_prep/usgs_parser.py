@@ -121,7 +121,7 @@ import pickle
 
 valid_basins = {}
 
-for fn in os.listdir('c:/Users/Matt Bartos/Dropbox/Southwest Heat Vulnerability Team Share/validation_data'):
+for fn in os.listdir('~/Dropbox/Southwest Heat Vulnerability Team Share/validation_data'):
 	if fn.endswith('csv'):
 		sp = '_'.join(fn.split('_')[:-1])
 		print sp
@@ -171,7 +171,7 @@ def get_validation_q(wpath, basin):
 				t.to_csv('%s/%s.csv' % (bwpath, padi))
 				
 for h in valid_basins.keys():
-	get_validation_q('c:/Users/Matt Bartos/Desktop/USGS_streamgauges_sub/validation', h)
+	get_validation_q('~/USGS_streamgauges_sub/validation', h)
 	
 pickle.dump( valid_basins, open( "validation_streamflows.p", "wb" ) )
 
