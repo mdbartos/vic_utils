@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import numpy as np
 
-df = pd.read_csv('/home/tabris/Dropbox/Southwest Heat Vulnerability Team Share/ppdb_data/USGS_wind.csv')
+df = pd.read_csv('~/Dropbox/Southwest Heat Vulnerability Team Share/ppdb_data/USGS_wind.csv')
 
 idx = df['nrel_idx'].unique()
 
