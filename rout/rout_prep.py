@@ -4,8 +4,6 @@ import os
 import ast
 import pickle
 
-
-
 class rout_prep():
 
 	def __init__(self, fns_idx, fns_clip, newname, **kwargs):
@@ -120,12 +118,6 @@ class rout_prep():
 			fractable.replace(to_replace=i, value=self.fracconv[i], inplace=True)
 		self.spec_d['frac']['nodata'] = float(self.nd)
 			
-#	def convert_rbm_internal(self, ctables):
-#		for n, j in ctables.items():
-#			for i in self.fracconv.keys():
-#				j.replace(to_replace=i, value=self.fracconv[i], inplace=True)
-#			self.spec_d[n]['nodata'] = -1
-
 		######################
 		#COMBINE INDICES	
 		######################
@@ -149,22 +141,17 @@ class rout_prep():
 			ncellsize = self.spec_d[d]['cellsize']
 			nnodata = self.spec_d[d]['nodata']
 			ndf = table_d[d].loc[self.i_li].loc[:, self.c_li]
-			#print ndf
 			ndf = ndf.sort(axis=0, ascending=False).sort(axis=1, ascending=True)
 			for i in ndf.columns:
 				coltype = type(ndf[i].iloc[0])
 				fillzero = self.nd
 				fillzero = coltype(fillzero)		
-#				print fillzero
 				ndf[i].fillna(value=fillzero, inplace=True)
-			#print d
-			#print ndf
+
 			self.ndf_d.update({d : ndf})
 			self.nspec_d.update({d : {}})
 			self.nspec_d[d].update({'cellsize' : ncellsize, 'ncol' : len(ndf.columns), 'nrow' : len(ndf.index), 'yll' : (min(ndf.index) - ncellsize/2), 'xll' : (min(ndf.columns) - ncellsize/2), 'nodata' : nnodata})
 			
-#			ndf_cols = sorted(list(ndf.columns))
-#			ndf[ndf_cols]
 
 	def fix_stnames(self):		
 		for i, v in self.stnloc.items():
@@ -190,15 +177,10 @@ class rout_prep():
 			stnfile_name = self.newname + '_' + typemarker
 		else:
 			stnfile_name = self.newname
-#		stnlocs = pickle.load( open(srpath, 'rb'))
 		if self.newname in self.stnloc.keys():
 			stnloc = self.stnloc[self.newname]
 			if not os.path.exists(swpath):
 				os.mkdir(swpath)
-#			lldf = pd.DataFrame(index=self.i_li, columns=self.c_li).sort(axis=0, ascending=False).sort(axis=1, ascending=True)
-#			for g in lldf.columns:
-#				q = [g for t in lldf[g]] 
-#				lldf[g] = zip(lldf.index, q)
 
 			diff_d = {}
 
@@ -207,7 +189,6 @@ class rout_prep():
 					for x in self.c_li:
 						for i in self.i_li:
 							lo = tuple([i,x])
-	#						print lo
 							diff = ((lo[0] - p[1][2][0])**2 + (lo[1] - p[1][2][1])**2)**0.5
 							diff_d.update({(i, x) : diff})
 				
@@ -215,15 +196,8 @@ class rout_prep():
 					rowno = self.i_li.index(cell[0]) + 1
 					colno = self.c_li.index(cell[1]) + 1
 					stn_tempfile.write("1 %s            %s %s -9999\nNONE\n" % (p[1][3], colno, rowno))
-	#				print 'row:', cellno[0]+1, 'col:', cellno[1]+1
 		else:
 			pass
-
-
-
-
-
-
 
 	def set_bounds(self):
 		dfbound = self.ndf_d['frac'] == self.nd
@@ -232,16 +206,11 @@ class rout_prep():
 	def check_forcings(self, chkdir):
 		internal_latlon = []
 		df_internal = self.ndf_d['frac'][self.ndf_d['frac'] != self.nd]
-#		print df_internal
 		for i in df_internal.columns:
 			int_row = df_internal[i].dropna().index
 			for j in int_row:
 				internal_latlon.append(str(tuple([j, i])))
-#		print internal_latlon
-#		print len(internal_latlon)
-#		print len(list(set(internal_latlon)))
 		f_li = [str(tuple([ast.literal_eval(fn.split('_')[-2]), ast.literal_eval(fn.split('_')[-1])])) for fn in os.listdir(chkdir)]
-#		print f_li
 		print [x for x in internal_latlon if not x in f_li]
 
 	def set_outlet(self):
@@ -289,92 +258,3 @@ class rout_prep():
 				if st_df[0] == ' ' or '\t':
 					st_df = st_df[1:]
 				outfile.write(st_df)
-
-
-#b = rout_prep({'frac' : 'lees_f_frac.asc'}, {'dir' : 'lees_f_dir.asc'}, 'lees_f')
-#b.prep_tables()
-#b.check_forcings('/media/chesterlab/My Passport/Files/VIC/output/full-energy/hist/lees_f')
-
-
-#1/16 degree
-
-li = list(set(['_'.join(i.split('_')[:-1]) for i in os.listdir('/home/chesterlab/Bartos/pre/ascii_16d')]))
-
-for a in li:
-	b = rout_prep({'frac' : '/home/chesterlab/Bartos/pre/ascii_16d/%s_f.asc' % (a)}, {'dir' : '/home/chesterlab/Bartos/VIC/input/rout/src_data/flowdir_16d.asc', 'alpha' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d16/bayeskrig_a.txt', 'beta' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d16/bayeskrig_b.txt', 'gamma' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d16/bayeskrig_g.txt', 'mu' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d16/bayeskrig_u.txt'}, a)
-	b.prep_tables()
-	b.get_stations('/home/chesterlab/Bartos/VIC/input/dict/hydrostn.p', '/home/chesterlab/Bartos/VIC/input/rout/d16/%s' % (a))
-	b.write_files('/home/chesterlab/Bartos/VIC/input/rout/d16/%s' % (a))
-	del b
-
-
-#1/8 degree
-
-li = list(set(['_'.join(i.split('_')[:-1]) for i in os.listdir('/home/chesterlab/Bartos/pre/ascii_8d')]))
-
-for a in li:
-	b = rout_prep({'frac' : '/home/chesterlab/Bartos/pre/ascii_8d/%s_f.asc' % (a)}, {'dir' : '/home/chesterlab/Bartos/VIC/input/rout/src_data/flowdir_8d.asc', 'alpha' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_a.txt', 'beta' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_b.txt', 'gamma' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_g.txt', 'mu' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_u.txt'}, a, stnloc='/home/chesterlab/Bartos/VIC/input/dict/opstn.p')
-	b.prep_tables()
-	b.fix_stnames()
-	b.get_stations('/home/chesterlab/Bartos/VIC/input/rout/d8/%s' % (a), typemarker = 'op')
-	#b.get_stations('/home/chesterlab/Bartos/VIC/input/dict/opstn.p', '/home/chesterlab/Bartos/VIC/input/rout/d8/%s' % (a), typemarker = 'op')
-	#b.get_stations('/home/chesterlab/Bartos/VIC/input/dict/hydrostn.p', '/home/chesterlab/Bartos/VIC/input/rout/d8/%s' % (a))
-	b.write_files('/home/chesterlab/Bartos/VIC/input/rout/d8/%s' % (a))
-	del b
-
-
-#RBM
-
-li = os.listdir('/media/melchior/BALTHASAR/nsf_hydro/VIC/output/full-energy/hist')  
-
-outlet_d = \
-{'baker': [48.522917, -121.951158],
- 'billw': [34.209146, -113.608841],
- 'brigham': [41.405775, -112.827558],
- 'castaic': [34.399037, -118.784297],
- 'colstrip': [46.254606, -106.715845],
- 'comanche': [38.264583, -104.535417],
- 'corona': [33.882482, -117.663351],
- 'cottonwood': [36.465939, -117.94375],
- 'coyotecr': [33.788092, -118.089583],
- 'davis': [35.198558, -114.565003],
- 'eaglept': [42.510417, -122.840234],
- 'elwha': [48.098935, -123.555232],
- 'gc': [36.11875, -112.084781],
- 'gila_imp': [32.735053, -114.465405],
- 'glenn': [42.947917, -115.297917],
- 'guer': [42.202083, -104.502083],
- 'hmjack': [48.019592, -122.189583],
- 'hoover': [36.031796, -114.721969],
- 'imperial': [32.892721, -114.466957],
- 'intermtn': [38.989061, -113.122394],
- 'irongate': [41.922742, -122.43533],
- 'kern': [35.389583, -119.037057],
- 'lahontan': [39.522221, -118.739583],
- 'lees_f': [36.86185, -111.588661],
- 'little_col': [35.916685, -111.580886],
- 'paper': [46.438448, -116.98125],
- 'paria': [36.873747, -111.595799],
- 'parker': [34.305715, -114.139496],
- 'pawnee': [40.297917, -103.639071],
- 'peck': [48.027083, -105.989583],
- 'pitt': [38.046113, -121.895622],
- 'redmtn': [33.327083, -117.33125],
- 'riohondo': [33.941766, -118.170734],
- 'rushcr': [38.025318, -118.999682],
- 'salton': [33.331882, -115.83125],
- 'sodasprings': [43.294926, -122.496699],
- 'tulare': [36.041109, -119.635417],
- 'virgin': [36.893115, -113.924861],
- 'wabuska': [39.140158, -119.155675],
- 'wauna': [46.19375, -123.38125],
- 'yelm': [47.042985, -122.677083]}
-
-
-for a in li:
-	b = rout_prep({'frac' : '/home/chesterlab/Bartos/pre/ascii_8d/%s_f.asc' % (a)}, {'dir' : '/home/chesterlab/Bartos/VIC/input/rout/src_data/flowdir_8d.asc', 'alpha' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_a.txt', 'beta' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_b.txt', 'gamma' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_g.txt', 'mu' : '/home/chesterlab/Bartos/VIC/input/rbm/mohseni/d8/bayeskrig_u.txt'}, a, rbm=True, outlet=outlet_d[a])
-	b.prep_tables()
-	b.write_files('/home/chesterlab/Bartos/VIC/input/rbm/run/d8/%s' % (a))
-	del b
-
-
